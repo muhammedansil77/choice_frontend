@@ -30,48 +30,44 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{ width: window.innerWidth < 1025 ? '75%' : 'var(--sidebar-width)' }}>
-      <div className="sidebar-logo" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 className="title-gradient" style={{ fontSize: '24px' }}>ADMIN PANEL</h2>
+    <aside className={`
+      fixed lg:fixed inset-y-0 left-0 z-[100]
+      w-[75vw] max-w-[300px] lg:w-[var(--sidebar-width)]
+      bg-glass/95 backdrop-blur-2xl border-r border-border
+      transition-transform duration-300 ease-in-out
+      flex flex-col p-6 overflow-y-auto
+      ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+    `}>
+      <div className="sidebar-logo mb-10 flex items-center justify-between">
+        <h2 className="title-gradient text-2xl">ADMIN PANEL</h2>
       </div>
 
-      <nav className="sidebar-nav" style={{ flex: 1 }}>
+      <nav className="sidebar-nav flex-1 space-y-2">
         {menuItems.map((item) => (
           <NavLink 
             key={item.path} 
             to={item.path}
             onClick={() => {
-              if (window.innerWidth < 1025) closeSidebar();
+              if (window.innerWidth < 1024) closeSidebar();
             }}
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              padding: '14px 16px',
-              borderRadius: '12px',
-              color: isActive ? 'var(--primary)' : 'var(--text-muted)',
-              textDecoration: 'none',
-              marginBottom: '8px',
-              background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-              transition: 'all 0.3s ease',
-              fontWeight: isActive ? '600' : '400',
-              position: 'relative'
-            })}
+            className={({ isActive }) => `
+              flex items-center p-4 rounded-xl transition-all duration-200
+              ${isActive ? 'bg-primary/10 text-primary font-semibold' : 'text-text-muted hover:bg-white/5'}
+            `}
           >
-            <span style={{ marginRight: '12px' }}>{item.icon}</span>
+            <span className="mr-3">{item.icon}</span>
             <span>{item.name}</span>
-            <ChevronRight size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+            <ChevronRight size={14} className="ml-auto opacity-50" />
           </NavLink>
         ))}
       </nav>
 
-      <div className="sidebar-footer" style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+      <div className="sidebar-footer border-t border-border pt-5 mt-auto">
         <button 
           onClick={handleLogout}
-          className="btn btn-outline" 
-          style={{ width: '100%', justifyContent: 'flex-start' }}
+          className="btn-outline w-full flex items-center p-3 rounded-xl text-text-muted hover:text-white transition-colors"
         >
-          <LogOut size={20} />
+          <LogOut size={20} className="mr-3" />
           <span>Logout</span>
         </button>
       </div>
