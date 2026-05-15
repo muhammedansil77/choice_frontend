@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://54.145.218.45:5000/api';
+const API_BASE_URL = 'https://api.anzil.online/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
