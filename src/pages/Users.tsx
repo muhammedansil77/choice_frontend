@@ -1,0 +1,424 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Search, 
+  UserPlus, 
+  Mail, 
+  Shield, 
+  MoreVertical, 
+  Coins, 
+  Plus, 
+  Minus, 
+  X,
+  Filter,
+  TrendingUp
+} from 'lucide-react';
+import api from '../services/api';
+import type { User } from '../types/index';
+
+const UsersPage: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [coinAmount, setCoinAmount] = useState<number | string>('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'add' | 'deduct' | 'distribute' | 'mint' | 'create'>('add');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [adminStats, setAdminStats] = useState<any>(null);
+  
+  // Create User Form State
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phoneNumber: '',
+    coinBalance: 0
+  });
+
+  useEffect(() => {
+    fetchUsers();
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await api.get('/coins/stats');
+      setAdminStats(response.data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setUsers([]);
+      alert('Failed to connect to the backend. Please check if the AWS server is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCoinAction = async () => {
+    if (modalType === 'create') {
+      if (!newUser.name || !newUser.email || !newUser.password) {
+        alert('Please fill in required fields');
+        return;
+      }
+      setActionLoading(true);
+      try {
+        await api.post('/users', newUser);
+        fetchUsers();
+        closeModal();
+        setNewUser({ name: '', email: '', password: '', phoneNumber: '', coinBalance: 0 });
+      } catch (error: any) {
+        alert(error.response?.data?.message || 'Failed to create user');
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+
+    const amount = Number(coinAmount);
+    if (amount <= 0) return;
+    if ((modalType === 'add' || modalType === 'reclaim') && !selectedUser) return;
+    
+    setActionLoading(true);
+    try {
+      const endpoint = modalType === 'distribute' ? '/coins/distribute' : (modalType === 'add' ? '/coins/add' : (modalType === 'mint' ? '/coins/mint' : '/coins/reclaim'));
+      
+      const payload = modalType === 'distribute' || modalType === 'mint'
+        ? { amount: amount }
+        : { userId: selectedUser?._id, amount: amount };
+
+      await api.post(endpoint, payload);
+      
+      // Update local state
+      if (modalType === 'distribute') {
+        setUsers(users.map(u => ({
+          ...u,
+          coinBalance: u.coinBalance + amount
+        })));
+      } else if (modalType === 'add') {
+        setUsers(users.map(u => {
+          if (u._id === selectedUser?._id) {
+            return {
+              ...u,
+              coinBalance: u.coinBalance + amount
+            };
+          }
+          return u;
+        }));
+      } else if (modalType === 'reclaim') {
+        setUsers(users.map(u => {
+          if (u._id === selectedUser?._id) {
+            return {
+              ...u,
+              coinBalance: u.coinBalance - amount
+            };
+          }
+          return u;
+        }));
+      }
+      
+      fetchStats();
+      closeModal();
+    } catch (error) {
+      console.error('Error managing coins:', error);
+      alert('Failed to update coins');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openModal = (user: User | null, type: 'add' | 'deduct' | 'distribute' | 'mint' | 'create') => {
+    setSelectedUser(user);
+    setModalType(type);
+    setCoinAmount('');
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedUser(null);
+  };
+
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="users-page">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+        <div>
+          <h1 className="title-gradient" style={{ fontSize: '32px', marginBottom: '8px' }}>User Management</h1>
+          <p style={{ color: 'var(--text-muted)' }}>View and manage platform users and their coin balances.</p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="btn btn-outline" onClick={() => openModal(null, 'mint')} style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+            <Plus size={20} />
+            <span>Mint Supply</span>
+          </button>
+          <button className="btn btn-outline" onClick={() => openModal(null, 'distribute')} style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}>
+            <Coins size={20} />
+            <span>Bulk Distribute</span>
+          </button>
+          <button className="btn btn-primary" onClick={() => openModal(null, 'create')}>
+            <UserPlus size={20} />
+            <span>Add New User</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
+        <div className="glass-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Pool</p>
+            <h4 style={{ fontSize: '20px', fontWeight: '700' }}>{adminStats?.totalCoins || 0}</h4>
+          </div>
+          <Coins size={24} color="var(--primary)" opacity={0.5} />
+        </div>
+        <div className="glass-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Remaining</p>
+            <h4 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--success)' }}>{adminStats?.remainingCoins || 0}</h4>
+          </div>
+          <Shield size={24} color="var(--success)" opacity={0.5} />
+        </div>
+        <div className="glass-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Distributed</p>
+            <h4 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--secondary)' }}>{adminStats?.distributedCoins || 0}</h4>
+          </div>
+          <TrendingUp size={24} color="var(--secondary)" opacity={0.5} />
+        </div>
+      </div>
+
+      <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px' }}>
+          <div style={{ 
+            flex: 1, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px', 
+            background: 'rgba(255,255,255,0.05)',
+            padding: '10px 16px',
+            borderRadius: '12px',
+            border: '1px solid var(--border)'
+          }}>
+            <Search size={18} color="var(--text-muted)" />
+            <input 
+              type="text" 
+              placeholder="Search by name or email..." 
+              style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%' }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button className="btn btn-outline">
+            <Filter size={18} />
+            <span>Filters</span>
+          </button>
+        </div>
+
+        <div className="table-container">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>User Details</th>
+                <th>Role</th>
+                <th>Balance</th>
+                <th>Join Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>Loading users...</td></tr>
+              ) : filteredUsers.map((user) => (
+                <tr key={user._id}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        borderRadius: '12px', 
+                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: '700',
+                        fontSize: '16px'
+                      }}>
+                        {user.name[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p style={{ fontWeight: '600', fontSize: '14px' }}>{user.name}</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Mail size={10} /> {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span style={{ 
+                      padding: '4px 10px', 
+                      borderRadius: '20px', 
+                      fontSize: '11px', 
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      background: user.role === 'admin' ? 'rgba(236, 72, 153, 0.1)' : 'rgba(99, 102, 241, 0.1)',
+                      color: user.role === 'admin' ? 'var(--secondary)' : 'var(--primary)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <Shield size={10} />
+                      {user.role}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Coins size={16} color="#f59e0b" />
+                      <span style={{ fontWeight: '700', color: '#f59e0b' }}>{user.coinBalance}</span>
+                    </div>
+                  </td>
+                  <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => openModal(user, 'add')}
+                        style={{ 
+                          width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border)', 
+                          background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                        title="Add Coins"
+                      >
+                        <Plus size={16} />
+                      </button>
+                      <button 
+                        onClick={() => openModal(user, 'deduct')}
+                        style={{ 
+                          width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border)', 
+                          background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                        title="Deduct Coins"
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <button style={{ 
+                        width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border)', 
+                        background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <MoreVertical size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal Overlay */}
+      {isModalOpen && (
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)'
+        }}>
+          <div className="glass-card animate-fade-in" style={{ width: '400px', position: 'relative' }}>
+            <button 
+              onClick={closeModal}
+              style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
+            <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>
+              {modalType === 'create' ? 'Add New User' : (modalType === 'mint' ? 'Mint New Supply' : (modalType === 'distribute' ? 'Global Coin Distribution' : (modalType === 'add' ? 'Add Coins' : 'Reclaim Coins')))}
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
+              {modalType === 'create'
+                ? 'Register a new user manually in the system.'
+                : modalType === 'mint' 
+                ? 'Create new coins into the central admin supply.'
+                : modalType === 'distribute' 
+                ? 'This will add coins to EVERY user from the admin pool.' 
+                : modalType === 'add' ? `Sending coins to ${selectedUser?.name}` : `Reclaiming coins from ${selectedUser?.name}`}
+            </p>
+
+            {modalType === 'create' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                <input 
+                  type="text" placeholder="Full Name" 
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
+                  value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                />
+                <input 
+                  type="email" placeholder="Email Address" 
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
+                  value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                />
+                <input 
+                  type="password" placeholder="Password" 
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
+                  value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                />
+                <input 
+                  type="text" placeholder="Phone Number" 
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
+                  value={newUser.phoneNumber} onChange={(e) => setNewUser({...newUser, phoneNumber: e.target.value})}
+                />
+              </div>
+            ) : (
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Amount to {modalType}</label>
+                <div style={{ position: 'relative' }}>
+                  <Coins size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#f59e0b' }} />
+                  <input 
+                    type="number" 
+                    style={{ 
+                      width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', 
+                      borderRadius: '12px', padding: '12px 12px 12px 48px', color: 'white', fontSize: '18px', fontWeight: '700'
+                    }}
+                    value={coinAmount}
+                    onChange={(e) => setCoinAmount(e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    placeholder="0"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={closeModal}>Cancel</button>
+              <button 
+                className="btn btn-primary" 
+                style={{ 
+                  flex: 1, 
+                  background: modalType === 'create' ? 'var(--primary)' : (modalType === 'mint' ? 'var(--accent)' : (modalType === 'distribute' ? 'var(--primary)' : (modalType === 'add' ? 'var(--success)' : 'var(--danger)'))) 
+                }}
+                onClick={handleCoinAction}
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Processing...' : (modalType === 'create' ? 'Create User' : (modalType === 'mint' ? 'Mint Now' : (modalType === 'distribute' ? 'Distribute Now' : `${modalType === 'add' ? 'Send' : 'Reclaim'} Coins`)))}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UsersPage;
