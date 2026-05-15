@@ -92,14 +92,14 @@ const Orders: React.FC = () => {
 
   return (
     <div className="orders-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+      <div className="flex-stack" style={{ justifyContent: 'space-between', marginBottom: '32px' }}>
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '32px', marginBottom: '8px' }}>Order Management</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Monitor and process purchase requests from users.</p>
+          <h1 className="title-gradient" style={{ fontSize: window.innerWidth < 768 ? '24px' : '32px', marginBottom: '8px' }}>Order Management</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Monitor and process purchase requests from users.</p>
         </div>
       </div>
 
-      <div className="glass-card" style={{ marginBottom: '32px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+      <div className="glass-card flex-stack" style={{ marginBottom: '32px', padding: '20px', alignItems: 'center' }}>
         <div style={{ 
           flex: 1, 
           display: 'flex', 
@@ -108,7 +108,8 @@ const Orders: React.FC = () => {
           background: 'rgba(255,255,255,0.05)',
           padding: '10px 16px',
           borderRadius: '12px',
-          border: '1px solid var(--border)'
+          border: '1px solid var(--border)',
+          width: '100%'
         }}>
           <Search size={18} color="var(--text-muted)" />
           <input 
@@ -120,25 +121,28 @@ const Orders: React.FC = () => {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Filter size={18} color="var(--text-muted)" />
-          <select 
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            style={{ 
-              background: 'rgba(255,255,255,0.05)', 
-              border: '1px solid var(--border)', 
-              color: 'white', 
-              padding: '10px 16px', 
-              borderRadius: '12px',
-              outline: 'none'
-            }}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
+        <div className="flex-stack" style={{ alignItems: 'center', gap: '12px', width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+            <Filter size={18} color="var(--text-muted)" />
+            <select 
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{ 
+                background: 'rgba(255,255,255,0.05)', 
+                border: '1px solid var(--border)', 
+                color: 'white', 
+                padding: '10px 16px', 
+                borderRadius: '12px',
+                outline: 'none',
+                width: '100%'
+              }}
+            >
+              <option value="all" style={{ background: 'var(--surface)' }}>All Status</option>
+              <option value="pending" style={{ background: 'var(--surface)' }}>Pending</option>
+              <option value="approved" style={{ background: 'var(--surface)' }}>Approved</option>
+              <option value="rejected" style={{ background: 'var(--surface)' }}>Rejected</option>
+            </select>
+          </div>
         </div>
       </div>
 

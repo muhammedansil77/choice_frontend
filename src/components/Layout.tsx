@@ -1,18 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { Menu, X } from 'lucide-react';
 
 const Layout: React.FC = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
     <div className="app-container">
-      <Sidebar />
+      {/* Mobile Header */}
+      <div className="mobile-header">
+        <h2 className="title-gradient" style={{ fontSize: '20px' }}>ADMIN</h2>
+        <button 
+          onClick={toggleSidebar}
+          style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}
+        >
+          {isSidebarOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
+      </div>
+
+      {/* Mobile Overlay */}
+      <div 
+        className={`overlay ${isSidebarOpen ? 'visible' : ''}`} 
+        onClick={closeSidebar}
+      />
+
+      <Sidebar isOpen={isSidebarOpen} closeSidebar={closeSidebar} />
+      
       <main className="main-content">
         <header className="main-header" style={{ 
           height: 'var(--header-height)', 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'flex-end',
-          marginBottom: '20px'
+          marginBottom: '20px',
+          display: window.innerWidth < 1025 ? 'none' : 'flex'
         }}>
           <div className="user-profile" style={{ 
             display: 'flex', 

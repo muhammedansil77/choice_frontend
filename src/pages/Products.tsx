@@ -89,12 +89,12 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="products-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+      <div className="flex-stack" style={{ justifyContent: 'space-between', marginBottom: '32px' }}>
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '32px', marginBottom: '8px' }}>Inventory</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Manage your products, prices, and stock levels.</p>
+          <h1 className="title-gradient" style={{ fontSize: window.innerWidth < 768 ? '24px' : '32px', marginBottom: '8px' }}>Inventory</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Manage your products, prices, and stock levels.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => openModal()}>
+        <button className="btn btn-primary" onClick={() => openModal()} style={{ width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
           <Plus size={20} />
           <span>Add Product</span>
         </button>
@@ -109,7 +109,7 @@ const ProductsPage: React.FC = () => {
           padding: '12px 20px',
           borderRadius: '16px',
           border: '1px solid var(--border)',
-          maxWidth: '500px'
+          maxWidth: window.innerWidth < 1025 ? '100%' : '500px'
         }}>
           <Search size={20} color="var(--text-muted)" />
           <input 

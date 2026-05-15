@@ -153,12 +153,12 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="users-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+      <div className="flex-stack" style={{ justifyContent: 'space-between', marginBottom: '32px' }}>
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '32px', marginBottom: '8px' }}>User Management</h1>
-          <p style={{ color: 'var(--text-muted)' }}>View and manage platform users and their coin balances.</p>
+          <h1 className="title-gradient" style={{ fontSize: window.innerWidth < 768 ? '24px' : '32px', marginBottom: '8px' }}>User Management</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>View and manage platform users and their coin balances.</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="flex-stack" style={{ gap: '12px', width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
           <button className="btn btn-outline" onClick={() => openModal(null, 'mint')} style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
             <Plus size={20} />
             <span>Mint Supply</span>
@@ -199,7 +199,7 @@ const UsersPage: React.FC = () => {
       </div>
 
       <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px' }}>
+        <div className="flex-stack" style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ 
             flex: 1, 
             display: 'flex', 
@@ -208,7 +208,8 @@ const UsersPage: React.FC = () => {
             background: 'rgba(255,255,255,0.05)',
             padding: '10px 16px',
             borderRadius: '12px',
-            border: '1px solid var(--border)'
+            border: '1px solid var(--border)',
+            width: '100%'
           }}>
             <Search size={18} color="var(--text-muted)" />
             <input 
@@ -219,7 +220,7 @@ const UsersPage: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn btn-outline">
+          <button className="btn btn-outline" style={{ width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
             <Filter size={18} />
             <span>Filters</span>
           </button>

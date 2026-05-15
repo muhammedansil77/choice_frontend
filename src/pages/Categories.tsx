@@ -92,12 +92,12 @@ const Categories: React.FC = () => {
 
   return (
     <div className="categories-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+      <div className="flex-stack" style={{ justifyContent: 'space-between', marginBottom: '32px' }}>
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '32px', marginBottom: '8px' }}>Category Management</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Organize your products into logical groups.</p>
+          <h1 className="title-gradient" style={{ fontSize: window.innerWidth < 768 ? '24px' : '32px', marginBottom: '8px' }}>Category Management</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Organize your products into logical groups.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => openModal()}>
+        <button className="btn btn-primary" onClick={() => openModal()} style={{ width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
           <Plus size={20} />
           <span>Add Category</span>
         </button>

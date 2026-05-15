@@ -10,7 +10,12 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  closeSidebar: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
     { name: 'Users', path: '/users', icon: <Users size={20} /> },
@@ -25,8 +30,8 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-logo" style={{ marginBottom: '40px' }}>
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{ width: window.innerWidth < 1025 ? '75%' : 'var(--sidebar-width)' }}>
+      <div className="sidebar-logo" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 className="title-gradient" style={{ fontSize: '24px' }}>ADMIN PANEL</h2>
       </div>
 
@@ -35,11 +40,14 @@ const Sidebar: React.FC = () => {
           <NavLink 
             key={item.path} 
             to={item.path}
+            onClick={() => {
+              if (window.innerWidth < 1025) closeSidebar();
+            }}
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
-              padding: '12px 16px',
+              padding: '14px 16px',
               borderRadius: '12px',
               color: isActive ? 'var(--primary)' : 'var(--text-muted)',
               textDecoration: 'none',

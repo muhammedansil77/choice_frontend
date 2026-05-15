@@ -84,12 +84,12 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard">
-      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+      <div className="dashboard-header flex-stack" style={{ justifyContent: 'space-between', marginBottom: '32px' }}>
         <div>
-          <h1 className="title-gradient" style={{ fontSize: '32px', marginBottom: '8px' }}>Controlled Economy</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Manage the central coin supply and monitor distribution.</p>
+          <h1 className="title-gradient" style={{ fontSize: window.innerWidth < 768 ? '24px' : '32px', marginBottom: '8px' }}>Controlled Economy</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Manage the central coin supply and monitor distribution.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowMintModal(true)}>
+        <button className="btn btn-primary" onClick={() => setShowMintModal(true)} style={{ width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
           <Plus size={20} />
           <span>Mint New Coins</span>
         </button>
@@ -118,7 +118,7 @@ const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth < 1025 ? '1fr' : '2fr 1fr', gap: '24px' }}>
         <div className="glass-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '600' }}>Circulation Analytics</h3>
