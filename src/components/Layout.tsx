@@ -36,7 +36,7 @@ const Layout: React.FC = () => {
           alignItems: 'center', 
           justifyContent: 'flex-end',
           marginBottom: '20px',
-          display: window.innerWidth < 1025 ? 'none' : 'flex'
+          display: typeof window !== 'undefined' && window.innerWidth < 1025 ? 'none' : 'flex'
         }}>
           <div className="user-profile" style={{ 
             display: 'flex', 
