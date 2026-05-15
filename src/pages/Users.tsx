@@ -22,7 +22,7 @@ const UsersPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [coinAmount, setCoinAmount] = useState<number | string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<'add' | 'deduct' | 'distribute' | 'mint' | 'create'>('add');
+  const [modalType, setModalType] = useState<'add' | 'reclaim' | 'distribute' | 'mint' | 'create'>('add');
   const [actionLoading, setActionLoading] = useState(false);
   const [adminStats, setAdminStats] = useState<any>(null);
   
@@ -134,7 +134,7 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const openModal = (user: User | null, type: 'add' | 'deduct' | 'distribute' | 'mint' | 'create') => {
+  const openModal = (user: User | null, type: 'add' | 'reclaim' | 'distribute' | 'mint' | 'create') => {
     setSelectedUser(user);
     setModalType(type);
     setCoinAmount('');
@@ -304,13 +304,13 @@ const UsersPage: React.FC = () => {
                         <Plus size={16} />
                       </button>
                       <button 
-                        onClick={() => openModal(user, 'deduct')}
+                        onClick={() => openModal(user, 'reclaim')}
                         style={{ 
                           width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border)', 
                           background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}
-                        title="Deduct Coins"
+                        title="Reclaim Coins"
                       >
                         <Minus size={16} />
                       </button>

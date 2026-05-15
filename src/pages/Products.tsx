@@ -6,9 +6,6 @@ import {
   Trash2, 
   Package, 
   Image as ImageIcon,
-  Tag,
-  Box,
-  ChevronRight,
   X,
   Upload
 } from 'lucide-react';

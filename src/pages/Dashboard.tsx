@@ -3,7 +3,6 @@ import {
   Users, 
   Package, 
   TrendingUp,
-  ArrowUpRight,
   Plus,
   Coins,
   History

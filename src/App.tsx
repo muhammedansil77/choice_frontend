@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -13,14 +13,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
-
-// Placeholder for missing pages to avoid errors
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="glass-card" style={{ padding: '40px', textAlign: 'center' }}>
-    <h2 className="title-gradient">{title}</h2>
-    <p style={{ color: 'var(--text-muted)', marginTop: '12px' }}>This module is currently under development.</p>
-  </div>
-);
 
 function App() {
   return (
