@@ -83,44 +83,50 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="dashboard w-full overflow-x-hidden">
-      <div className="dashboard-header flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+    <div className="dashboard">
+      <div className="dashboard-header flex-stack" style={{ justifyContent: 'space-between', marginBottom: '32px' }}>
         <div>
-          <h1 className="title-gradient text-2xl lg:text-3xl mb-2">Controlled Economy</h1>
-          <p className="text-text-muted text-sm lg:text-base">Manage the central coin supply and monitor distribution.</p>
+          <h1 className="title-gradient" style={{ fontSize: window.innerWidth < 768 ? '24px' : '32px', marginBottom: '8px' }}>Controlled Economy</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Manage the central coin supply and monitor distribution.</p>
         </div>
-        <button 
-          className="btn-primary w-full lg:w-auto px-6 py-3 rounded-xl flex items-center justify-center gap-2" 
-          onClick={() => setShowMintModal(true)}
-        >
+        <button className="btn btn-primary" onClick={() => setShowMintModal(true)} style={{ width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
           <Plus size={20} />
           <span>Mint New Coins</span>
         </button>
       </div>
 
-      <div className="stats-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="stats-grid" style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+        gap: '24px',
+        marginBottom: '32px'
+      }}>
         {dashboardStats.map((stat, index) => (
-          <div key={index} className="glass-card flex items-center gap-5 p-5 animate-fade-in">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white/5 text-[stat.color]" style={{ color: stat.color, backgroundColor: `${stat.color}15` }}>
+          <div key={index} className="glass-card animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ 
+              width: '56px', height: '56px', borderRadius: '16px', 
+              backgroundColor: `${stat.color}20`, color: stat.color,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
               {stat.icon}
             </div>
             <div>
-              <p className="text-text-muted text-xs font-semibold uppercase tracking-wider mb-1">{stat.title}</p>
-              <h2 className="text-2xl font-bold">{loading ? '...' : stat.value}</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: '500' }}>{stat.title}</p>
+              <h2 style={{ fontSize: '24px', fontWeight: '700' }}>{loading ? '...' : stat.value}</h2>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="glass-card lg:col-span-2 p-6 overflow-hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <h3 className="text-lg font-semibold">Circulation Analytics</h3>
-            <span className="text-xs text-text-muted flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
+      <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth < 1025 ? '1fr' : '2fr 1fr', gap: '24px' }}>
+        <div className="glass-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600' }}>Circulation Analytics</h3>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <History size={14} /> Historical supply growth
             </span>
           </div>
-          <div className="h-[300px] w-full">
+          <div style={{ height: '300px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -139,57 +145,48 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="glass-card p-6">
-          <h3 className="text-lg font-semibold mb-8">Wallet Summary</h3>
-          <div className="space-y-8">
-             <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl">
-                <span className="text-text-muted text-sm">Total Minted</span>
-                <span className="font-bold text-lg">{stats?.totalCoins || 0}</span>
+        <div className="glass-card">
+          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px' }}>Wallet Summary</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Total Minted</span>
+                <span style={{ fontWeight: '600' }}>{stats?.totalCoins || 0}</span>
              </div>
-             <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl">
-                <span className="text-text-muted text-sm">Distributed</span>
-                <span className="font-bold text-lg text-secondary">{stats?.distributedCoins || 0}</span>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Distributed</span>
+                <span style={{ fontWeight: '600', color: 'var(--secondary)' }}>{stats?.distributedCoins || 0}</span>
              </div>
-             <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-1000"
-                  style={{ width: `${(stats?.distributedCoins || 0) / (stats?.totalCoins || 1) * 100}%` }}
-                ></div>
+             <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ 
+                  width: `${(stats?.distributedCoins || 0) / (stats?.totalCoins || 1) * 100}%`, 
+                  height: '100%', 
+                  background: 'linear-gradient(90deg, var(--primary), var(--secondary))' 
+                }}></div>
              </div>
-             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20">
-                <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-2">REMAINING POOL</p>
-                <h4 className="text-3xl font-black">{stats?.remainingCoins || 0} <span className="text-sm font-normal text-text-muted">Coins</span></h4>
+             <div style={{ background: 'rgba(99, 102, 241, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                <p style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: '600', marginBottom: '4px' }}>REMAINING POOL</p>
+                <h4 style={{ fontSize: '24px', fontWeight: '700' }}>{stats?.remainingCoins || 0} Coins</h4>
              </div>
           </div>
         </div>
       </div>
 
       {showMintModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[200] p-4">
-          <div className="glass-card w-full max-w-md animate-fade-in relative">
-            <button 
-              onClick={() => setShowMintModal(false)}
-              className="absolute top-4 right-4 text-text-muted hover:text-white"
-            >
-              <X size={20} />
-            </button>
-            <h3 className="text-xl font-bold mb-6">Mint New Supply</h3>
-            <div className="space-y-4 mb-8">
-              <label className="block text-[10px] text-text-muted font-bold uppercase tracking-widest">Amount to Create</label>
-              <div className="relative">
-                <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={20} />
-                <input 
-                  type="number" 
-                  className="w-full bg-white/5 border border-border rounded-xl py-4 pl-12 pr-4 text-white text-2xl font-bold focus:outline-none focus:border-primary transition-colors"
-                  value={mintAmount}
-                  onChange={(e) => setMintAmount(Number(e.target.value))}
-                  autoFocus
-                />
-              </div>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
+          <div className="glass-card animate-fade-in" style={{ width: '400px' }}>
+            <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Mint New Supply</h3>
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>AMOUNT TO CREATE</label>
+              <input 
+                type="number" 
+                style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white', fontSize: '18px', fontWeight: '700' }}
+                value={mintAmount}
+                onChange={(e) => setMintAmount(Number(e.target.value))}
+              />
             </div>
-            <div className="flex gap-4">
-              <button className="btn-outline flex-1 py-3 rounded-xl" onClick={() => setShowMintModal(false)}>Cancel</button>
-              <button className="btn-primary flex-1 py-3 rounded-xl" onClick={handleMint}>Mint Now</button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowMintModal(false)}>Cancel</button>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleMint}>Mint Supply</button>
             </div>
           </div>
         </div>

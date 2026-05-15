@@ -152,78 +152,82 @@ const UsersPage: React.FC = () => {
   );
 
   return (
-    <div className="users-page w-full overflow-x-hidden">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+    <div className="users-page">
+      <div className="flex-stack" style={{ justifyContent: 'space-between', marginBottom: '32px' }}>
         <div>
-          <h1 className="title-gradient text-2xl lg:text-3xl mb-2">User Management</h1>
-          <p className="text-text-muted text-sm lg:text-base">View and manage platform users and their coin balances.</p>
+          <h1 className="title-gradient" style={{ fontSize: window.innerWidth < 768 ? '24px' : '32px', marginBottom: '8px' }}>User Management</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>View and manage platform users and their coin balances.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
-          <button className="btn-outline px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-accent border-accent/30 hover:bg-accent/10" onClick={() => openModal(null, 'mint')}>
-            <Plus size={18} />
-            <span className="text-sm font-semibold">Mint Supply</span>
+        <div className="flex-stack" style={{ gap: '12px', width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
+          <button className="btn btn-outline" onClick={() => openModal(null, 'mint')} style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+            <Plus size={20} />
+            <span>Mint Supply</span>
           </button>
-          <button className="btn-outline px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-primary border-primary/30 hover:bg-primary/10" onClick={() => openModal(null, 'distribute')}>
-            <Coins size={18} />
-            <span className="text-sm font-semibold">Distribute</span>
+          <button className="btn btn-outline" onClick={() => openModal(null, 'distribute')} style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}>
+            <Coins size={20} />
+            <span>Bulk Distribute</span>
           </button>
-          <button className="btn-primary px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20" onClick={() => openModal(null, 'create')}>
-            <UserPlus size={18} />
-            <span className="text-sm font-semibold">Add User</span>
+          <button className="btn btn-primary" onClick={() => openModal(null, 'create')}>
+            <UserPlus size={20} />
+            <span>Add New User</span>
           </button>
         </div>
       </div>
 
-      <div className="stats-row grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="glass-card flex justify-between items-center p-5 animate-fade-in">
+      <div className="stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
+        <div className="glass-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p className="text-[10px] text-text-muted uppercase tracking-widest font-bold mb-1">Total Pool</p>
-            <h4 className="text-2xl font-bold tracking-tight">{adminStats?.totalCoins || 0}</h4>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Pool</p>
+            <h4 style={{ fontSize: '20px', fontWeight: '700' }}>{adminStats?.totalCoins || 0}</h4>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-            <Coins size={22} />
-          </div>
+          <Coins size={24} color="var(--primary)" opacity={0.5} />
         </div>
-        <div className="glass-card flex justify-between items-center p-5 animate-fade-in">
+        <div className="glass-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p className="text-[10px] text-text-muted uppercase tracking-widest font-bold mb-1">Remaining</p>
-            <h4 className="text-2xl font-bold tracking-tight text-success">{adminStats?.remainingCoins || 0}</h4>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Remaining</p>
+            <h4 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--success)' }}>{adminStats?.remainingCoins || 0}</h4>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center text-success">
-            <Shield size={22} />
-          </div>
+          <Shield size={24} color="var(--success)" opacity={0.5} />
         </div>
-        <div className="glass-card flex justify-between items-center p-5 animate-fade-in">
+        <div className="glass-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p className="text-[10px] text-text-muted uppercase tracking-widest font-bold mb-1">Distributed</p>
-            <h4 className="text-2xl font-bold tracking-tight text-secondary">{adminStats?.distributedCoins || 0}</h4>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Distributed</p>
+            <h4 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--secondary)' }}>{adminStats?.distributedCoins || 0}</h4>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
-            <TrendingUp size={22} />
-          </div>
+          <TrendingUp size={24} color="var(--secondary)" opacity={0.5} />
         </div>
       </div>
 
-      <div className="glass-card overflow-hidden p-0 mb-10 border-border/50">
-        <div className="flex flex-col md:flex-row gap-4 p-5 border-b border-border/50">
-          <div className="flex-1 flex items-center gap-3 bg-white/5 px-4 py-2.5 rounded-xl border border-border/50 focus-within:border-primary/50 transition-all">
-            <Search size={18} className="text-text-muted" />
+      <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
+        <div className="flex-stack" style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ 
+            flex: 1, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px', 
+            background: 'rgba(255,255,255,0.05)',
+            padding: '10px 16px',
+            borderRadius: '12px',
+            border: '1px solid var(--border)',
+            width: '100%'
+          }}>
+            <Search size={18} color="var(--text-muted)" />
             <input 
               type="text" 
               placeholder="Search by name or email..." 
-              className="bg-transparent border-none text-white outline-none w-full text-sm"
+              style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%' }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn-outline px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-white/5">
+          <button className="btn btn-outline" style={{ width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
             <Filter size={18} />
             <span>Filters</span>
           </button>
         </div>
 
-        <div className="overflow-x-auto w-full custom-scrollbar">
-          <table className="admin-table w-full min-w-[800px]">
+        <div className="table-container">
+          <table className="admin-table">
             <thead>
               <tr>
                 <th>User Details</th>
@@ -329,58 +333,64 @@ const UsersPage: React.FC = () => {
 
       {/* Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[200] p-4">
-          <div className="glass-card w-full max-w-md animate-fade-in relative">
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)'
+        }}>
+          <div className="glass-card animate-fade-in" style={{ width: '400px', position: 'relative' }}>
             <button 
               onClick={closeModal}
-              className="absolute top-4 right-4 text-text-muted hover:text-white"
+              style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
             >
               <X size={20} />
             </button>
-            <h3 className="text-xl font-bold mb-2">
-              {modalType === 'create' ? 'Add New User' : (modalType === 'mint' ? 'Mint New Supply' : (modalType === 'distribute' ? 'Global Distribution' : (modalType === 'add' ? 'Add Coins' : 'Reclaim Coins')))}
+            <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>
+              {modalType === 'create' ? 'Add New User' : (modalType === 'mint' ? 'Mint New Supply' : (modalType === 'distribute' ? 'Global Coin Distribution' : (modalType === 'add' ? 'Add Coins' : 'Reclaim Coins')))}
             </h3>
-            <p className="text-text-muted text-sm mb-8">
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
               {modalType === 'create'
                 ? 'Register a new user manually in the system.'
                 : modalType === 'mint' 
-                ? 'Create new coins into the central supply.'
+                ? 'Create new coins into the central admin supply.'
                 : modalType === 'distribute' 
-                ? 'This will add coins to EVERY user.' 
+                ? 'This will add coins to EVERY user from the admin pool.' 
                 : modalType === 'add' ? `Sending coins to ${selectedUser?.name}` : `Reclaiming coins from ${selectedUser?.name}`}
             </p>
 
             {modalType === 'create' ? (
-              <div className="space-y-4 mb-8">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
                 <input 
                   type="text" placeholder="Full Name" 
-                  className="w-full bg-white/5 border border-border rounded-xl p-3.5 text-white focus:border-primary outline-none transition-colors"
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
                   value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})}
                 />
                 <input 
                   type="email" placeholder="Email Address" 
-                  className="w-full bg-white/5 border border-border rounded-xl p-3.5 text-white focus:border-primary outline-none transition-colors"
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
                   value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                 />
                 <input 
                   type="password" placeholder="Password" 
-                  className="w-full bg-white/5 border border-border rounded-xl p-3.5 text-white focus:border-primary outline-none transition-colors"
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
                   value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                 />
                 <input 
                   type="text" placeholder="Phone Number" 
-                  className="w-full bg-white/5 border border-border rounded-xl p-3.5 text-white focus:border-primary outline-none transition-colors"
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
                   value={newUser.phoneNumber} onChange={(e) => setNewUser({...newUser, phoneNumber: e.target.value})}
                 />
               </div>
             ) : (
-              <div className="mb-8">
-                <label className="block text-[10px] text-text-muted font-bold uppercase tracking-widest mb-2">Amount to {modalType}</label>
-                <div className="relative">
-                  <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={20} />
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Amount to {modalType}</label>
+                <div style={{ position: 'relative' }}>
+                  <Coins size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#f59e0b' }} />
                   <input 
                     type="number" 
-                    className="w-full bg-white/5 border border-border rounded-xl py-4 pl-12 pr-4 text-white text-2xl font-bold focus:outline-none focus:border-primary transition-colors"
+                    style={{ 
+                      width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', 
+                      borderRadius: '12px', padding: '12px 12px 12px 48px', color: 'white', fontSize: '18px', fontWeight: '700'
+                    }}
                     value={coinAmount}
                     onChange={(e) => setCoinAmount(e.target.value)}
                     onFocus={(e) => e.target.select()}
@@ -391,16 +401,18 @@ const UsersPage: React.FC = () => {
               </div>
             )}
 
-            <div className="flex gap-4">
-              <button className="btn-outline flex-1 py-3 rounded-xl" onClick={closeModal}>Cancel</button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={closeModal}>Cancel</button>
               <button 
-                className={`btn-primary flex-1 py-3 rounded-xl shadow-lg ${
-                  modalType === 'reclaim' ? 'bg-danger hover:bg-danger/80 shadow-danger/20' : 'shadow-primary/20'
-                }`}
+                className="btn btn-primary" 
+                style={{ 
+                  flex: 1, 
+                  background: modalType === 'create' ? 'var(--primary)' : (modalType === 'mint' ? 'var(--accent)' : (modalType === 'distribute' ? 'var(--primary)' : (modalType === 'add' ? 'var(--success)' : 'var(--danger)'))) 
+                }}
                 onClick={handleCoinAction}
                 disabled={actionLoading}
               >
-                {actionLoading ? 'Processing...' : (modalType === 'create' ? 'Create User' : (modalType === 'mint' ? 'Mint Now' : (modalType === 'distribute' ? 'Distribute' : `${modalType === 'add' ? 'Send' : 'Reclaim'}`)))}
+                {actionLoading ? 'Processing...' : (modalType === 'create' ? 'Create User' : (modalType === 'mint' ? 'Mint Now' : (modalType === 'distribute' ? 'Distribute Now' : `${modalType === 'add' ? 'Send' : 'Reclaim'} Coins`)))}
               </button>
             </div>
           </div>
