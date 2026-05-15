@@ -33,7 +33,6 @@ const Layout: React.FC = () => {
       <main className="main-content">
         <header className="main-header" style={{ 
           height: 'var(--header-height)', 
-          display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'flex-end',
           marginBottom: '20px',
