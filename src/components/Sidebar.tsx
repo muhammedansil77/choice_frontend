@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{ width: window.innerWidth < 1025 ? '75%' : 'var(--sidebar-width)' }}>
       <div className="sidebar-logo" style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 className="title-gradient" style={{ fontSize: '24px' }}>ADMIN PANEL</h2>
+        <h2 className="title-gradient" style={{ fontSize: '20px', fontWeight: '700', letterSpacing: '-0.02em' }}>Choice Electricals</h2>
       </div>
 
       {/* Mobile User Profile */}

@@ -14,7 +14,7 @@ const Layout: React.FC = () => {
     <div className="app-container">
       {/* Mobile Header */}
       <div className="mobile-header">
-        <h2 className="title-gradient" style={{ fontSize: '20px' }}>ADMIN</h2>
+        <h2 className="title-gradient" style={{ fontSize: '20px' }}>Choice Electricals</h2>
         <button 
           onClick={toggleSidebar}
           style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}
@@ -35,10 +35,11 @@ const Layout: React.FC = () => {
         <header className="main-header" style={{ 
           height: 'var(--header-height)', 
           alignItems: 'center', 
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           marginBottom: '20px',
           display: typeof window !== 'undefined' && window.innerWidth < 1025 ? 'none' : 'flex'
         }}>
+          <h1 className="title-gradient" style={{ fontSize: '24px', margin: 0, fontWeight: '700' }}>Choice Electricals</h1>
           <div className="user-profile" style={{ 
             display: 'flex', 
             alignItems: 'center', 
