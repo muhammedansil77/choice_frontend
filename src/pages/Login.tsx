@@ -43,12 +43,18 @@ const Login: React.FC = () => {
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center',
-      background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)'
+      background: 'linear-gradient(rgba(10, 10, 18, 0.85), rgba(10, 10, 18, 0.85)), url("/bg-store.jpg")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed'
     }}>
-      <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
+      <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '40px', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(168, 85, 247, 0.05)' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h2 className="title-gradient" style={{ fontSize: '32px' }}>Admin Login</h2>
-          <p style={{ color: 'var(--text-muted)', marginTop: '8px' }}>Enter your credentials to access the dashboard</p>
+          <h2 className="title-gradient" style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: 0 }}>
+            Choice Electricals <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 10px var(--primary)' }}></span>
+          </h2>
+          <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '13px' }}>Control Panel Access Portal</p>
         </div>
 
         {error && (
@@ -74,7 +80,26 @@ const Login: React.FC = () => {
               <input 
                 type="email" 
                 placeholder="admin@example.com"
-                style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px 14px 14px 48px', color: 'white' }}
+                style={{ 
+                  width: '100%', 
+                  background: 'rgba(255,255,255,0.02)', 
+                  border: '1px solid var(--border)', 
+                  borderRadius: '12px', 
+                  padding: '14px 14px 14px 48px', 
+                  color: 'white',
+                  transition: 'all 0.3s ease',
+                  outline: 'none'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--primary)';
+                  e.target.style.background = 'rgba(255, 255, 255, 0.04)';
+                  e.target.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.15)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border)';
+                  e.target.style.background = 'rgba(255, 255, 255, 0.02)';
+                  e.target.style.boxShadow = 'none';
+                }}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -89,7 +114,26 @@ const Login: React.FC = () => {
               <input 
                 type="password" 
                 placeholder="••••••••"
-                style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px 14px 14px 48px', color: 'white' }}
+                style={{ 
+                  width: '100%', 
+                  background: 'rgba(255,255,255,0.02)', 
+                  border: '1px solid var(--border)', 
+                  borderRadius: '12px', 
+                  padding: '14px 14px 14px 48px', 
+                  color: 'white',
+                  transition: 'all 0.3s ease',
+                  outline: 'none'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--primary)';
+                  e.target.style.background = 'rgba(255, 255, 255, 0.04)';
+                  e.target.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.15)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border)';
+                  e.target.style.background = 'rgba(255, 255, 255, 0.02)';
+                  e.target.style.boxShadow = 'none';
+                }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -100,7 +144,19 @@ const Login: React.FC = () => {
           <button 
             type="submit" 
             className="btn btn-primary" 
-            style={{ padding: '14px', marginTop: '10px', width: '100%', fontSize: '16px' }}
+            style={{ 
+              padding: '14px', 
+              marginTop: '10px', 
+              width: '100%', 
+              fontSize: '16px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '8px',
+              fontWeight: '600',
+              borderRadius: '12px',
+              transition: 'all 0.3s'
+            }}
             disabled={loading}
           >
             {loading ? 'Authenticating...' : 'Sign In'}
