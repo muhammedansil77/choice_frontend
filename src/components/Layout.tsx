@@ -32,13 +32,7 @@ const Layout: React.FC = () => {
       <Sidebar isOpen={isSidebarOpen} closeSidebar={closeSidebar} />
       
       <main className="main-content">
-        <header className="main-header" style={{ 
-          height: 'var(--header-height)', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          marginBottom: '20px',
-          display: typeof window !== 'undefined' && window.innerWidth < 1025 ? 'none' : 'flex'
-        }}>
+        <header className="main-header">
           <h1 className="title-gradient" style={{ fontSize: '24px', margin: 0, fontWeight: '700' }}>Choice Electricals</h1>
           <div className="user-profile" style={{ 
             display: 'flex', 

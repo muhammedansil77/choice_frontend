@@ -80,9 +80,27 @@ body {
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
-  padding: 32px;
   min-height: 100vh;
   transition: all 0.3s ease;
+}
+
+.main-header {
+  height: var(--header-height);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 80;
+}
+
+.page-wrapper {
+  padding: 32px;
 }
 
 /* Mobile Responsiveness */
@@ -98,8 +116,15 @@ body {
 
   .main-content {
     margin-left: 0;
+  }
+
+  .page-wrapper {
     padding: var(--mobile-padding);
     padding-top: calc(var(--header-height) + 20px);
+  }
+
+  .main-header {
+    display: none !important;
   }
 
   .stats-grid, .stats-row {
