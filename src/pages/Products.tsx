@@ -20,6 +20,10 @@ const ProductsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Partial<Product> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // File Upload State
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -43,16 +47,50 @@ const ProductsPage: React.FC = () => {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedFiles(filesArray);
+      
+      const previews = filesArray.map(file => URL.createObjectURL(file));
+      setImagePreviews(previews);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentProduct?.name || !currentProduct?.priceInCoins) return;
 
     setIsSubmitting(true);
     try {
+      const formData = new FormData();
+      formData.append('name', currentProduct.name);
+      formData.append('description', currentProduct.description || '');
+      formData.append('priceInCoins', String(currentProduct.priceInCoins));
+      formData.append('category', currentProduct.category || '');
+      formData.append('stock', String(currentProduct.stock || 0));
+      formData.append('status', currentProduct.status || 'available');
+      
+      if (selectedFiles.length > 0) {
+        selectedFiles.forEach(file => {
+          formData.append('images', file);
+        });
+      } else if (currentProduct.images) {
+        currentProduct.images.forEach(img => {
+          formData.append('images', img);
+        });
+      }
+
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+
       if (currentProduct._id) {
-        await api.put(`/products/${currentProduct._id}`, currentProduct);
+        await api.put(`/products/${currentProduct._id}`, formData, config);
       } else {
-        await api.post('/products', currentProduct);
+        await api.post('/products', formData, config);
       }
       fetchData();
       closeModal();
@@ -74,12 +112,16 @@ const ProductsPage: React.FC = () => {
       status: 'available',
       images: []
     });
+    setSelectedFiles([]);
+    setImagePreviews(product?.images || []);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setCurrentProduct(null);
+    setSelectedFiles([]);
+    setImagePreviews([]);
   };
 
   const filteredProducts = products.filter(p => 
@@ -271,14 +313,38 @@ const ProductsPage: React.FC = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Images</label>
-                <div style={{ 
-                  border: '2px dashed var(--border)', 
-                  borderRadius: '12px', 
-                  padding: '24px', 
-                  textAlign: 'center',
-                  cursor: 'pointer'
-                }}>
-                  <Upload size={24} color="var(--text-muted)" style={{ marginBottom: '8px' }} />
+                
+                {imagePreviews.length > 0 && (
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                    {imagePreviews.map((url, idx) => (
+                      <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                        <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <input 
+                  type="file" 
+                  id="product-image-upload" 
+                  multiple 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
+                  style={{ display: 'none' }} 
+                />
+                
+                <div 
+                  onClick={() => document.getElementById('product-image-upload')?.click()}
+                  style={{ 
+                    border: '2px dashed var(--border)', 
+                    borderRadius: '12px', 
+                    padding: '24px', 
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.01)'
+                  }}
+                >
+                  <Upload size={24} color="var(--text-muted)" style={{ marginBottom: '8px', marginLeft: 'auto', marginRight: 'auto' }} />
                   <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Click to upload or drag and drop images</p>
                 </div>
               </div>
