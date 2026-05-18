@@ -86,6 +86,8 @@ body {
   margin-left: calc(var(--active-sidebar-width, var(--sidebar-width)) + 32px);
   min-height: 100vh;
   transition: margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .main-header {
@@ -131,11 +133,17 @@ body {
 
   .main-content {
     margin-left: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
   }
 
   .page-wrapper {
     padding: var(--mobile-padding);
     padding-top: calc(var(--header-height) + 20px);
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
   }
 
   .main-header {

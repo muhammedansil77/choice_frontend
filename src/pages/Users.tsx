@@ -153,12 +153,51 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="users-page">
-      <div className="flex-stack" style={{ justifyContent: 'space-between', marginBottom: '32px' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .users-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+          }
+          .users-actions-bar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            gap: 10px !important;
+          }
+          .users-actions-bar button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .search-filter-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+          }
+          .filter-btn {
+            width: 100% !important;
+          }
+          .stats-row {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .mobile-hide-cell {
+            display: none !important;
+          }
+          .user-modal-box {
+            width: 95% !important;
+            padding: 24px !important;
+            margin: 16px !important;
+          }
+        }
+      `}</style>
+      <div className="users-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', gap: '20px', flexWrap: 'wrap' }}>
         <div>
-          <h1 className="title-gradient" style={{ fontSize: window.innerWidth < 768 ? '24px' : '32px', marginBottom: '8px' }}>User Management</h1>
+          <h1 className="title-gradient" style={{ fontSize: '32px', marginBottom: '8px' }}>User Management</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>View and manage platform users and their coin balances.</p>
         </div>
-        <div className="flex-stack" style={{ gap: '12px', width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
+        <div className="users-actions-bar" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <button className="btn btn-outline" onClick={() => openModal(null, 'mint')} style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
             <Plus size={20} />
             <span>Mint Supply</span>
@@ -199,7 +238,7 @@ const UsersPage: React.FC = () => {
       </div>
 
       <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-        <div className="flex-stack" style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
+        <div className="flex-stack search-filter-row" style={{ padding: '20px', borderBottom: '1px solid var(--border)', gap: '16px' }}>
           <div style={{ 
             flex: 1, 
             display: 'flex', 
@@ -220,7 +259,7 @@ const UsersPage: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn btn-outline" style={{ width: window.innerWidth < 1025 ? '100%' : 'auto' }}>
+          <button className="btn btn-outline filter-btn" style={{ height: '44px', justifyContent: 'center' }}>
             <Filter size={18} />
             <span>Filters</span>
           </button>
@@ -233,7 +272,7 @@ const UsersPage: React.FC = () => {
                 <th>User Details</th>
                 <th>Role</th>
                 <th>Balance</th>
-                <th>Join Date</th>
+                <th className="mobile-hide-cell">Join Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -243,7 +282,7 @@ const UsersPage: React.FC = () => {
               ) : filteredUsers.map((user) => (
                 <tr key={user._id}>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '200px' }}>
                       <div style={{ 
                         width: '40px', 
                         height: '40px', 
@@ -253,14 +292,15 @@ const UsersPage: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: '700',
-                        fontSize: '16px'
+                        fontSize: '16px',
+                        flexShrink: 0
                       }}>
                         {user.name[0].toUpperCase()}
                       </div>
-                      <div>
-                        <p style={{ fontWeight: '600', fontSize: '14px' }}>{user.name}</p>
-                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Mail size={10} /> {user.email}
+                      <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                        <p style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={user.name}>{user.name}</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={user.email}>
+                          <Mail size={10} style={{ flexShrink: 0 }} /> {user.email}
                         </p>
                       </div>
                     </div>
@@ -288,7 +328,7 @@ const UsersPage: React.FC = () => {
                       <span style={{ fontWeight: '700', color: '#f59e0b' }}>{user.coinBalance}</span>
                     </div>
                   </td>
-                  <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                  <td className="mobile-hide-cell" style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td>
@@ -335,9 +375,10 @@ const UsersPage: React.FC = () => {
       {isModalOpen && (
         <div style={{ 
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)'
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)',
+          padding: '16px'
         }}>
-          <div className="glass-card animate-fade-in" style={{ width: '400px', position: 'relative' }}>
+          <div className="glass-card animate-fade-in user-modal-box" style={{ width: '400px', position: 'relative', maxWidth: '100%' }}>
             <button 
               onClick={closeModal}
               style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
