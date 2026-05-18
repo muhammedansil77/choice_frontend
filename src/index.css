@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --secondary: #ec4899;
-  --accent: #8b5cf6;
-  --background: #0f172a;
-  --surface: rgba(30, 41, 59, 0.45);
-  --surface-hover: rgba(47, 58, 86, 0.6);
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: rgba(255, 255, 255, 0.08);
-  --glass: rgba(15, 23, 42, 0.65);
+  --primary: #a855f7;          /* Neon purple */
+  --primary-hover: #9333ea;    /* Darker purple */
+  --secondary: #d946ef;        /* Neon fuchsia */
+  --accent: #06b6d4;           /* Neon cyan */
+  --background: #030712;       /* Deep space background */
+  --surface: rgba(17, 24, 39, 0.35);
+  --surface-hover: rgba(31, 41, 55, 0.5);
+  --text: #f9fafb;
+  --text-muted: #9ca3af;
+  --border: rgba(168, 85, 247, 0.15); /* Sleek glowing purple border */
+  --glass: rgba(10, 10, 18, 0.45);
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
-  --sidebar-width: 260px;
-  --header-height: 70px;
-  --radius: 16px;
+  --sidebar-width: 280px;
+  --header-height: 72px;
+  --radius: 20px;
   --mobile-padding: 16px;
 }
 
@@ -29,7 +29,7 @@
 
 body {
   font-family: 'Outfit', sans-serif;
-  background-image: linear-gradient(rgba(15, 23, 42, 0.70), rgba(15, 23, 42, 0.70)), url('/bg-store.jpg');
+  background-image: linear-gradient(rgba(10, 10, 18, 0.85), rgba(10, 10, 18, 0.85)), url('/bg-store.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -63,57 +63,74 @@ body {
 
 .sidebar {
   width: var(--sidebar-width);
-  background: rgba(15, 23, 42, 0.45);
-  border-right: 1px solid var(--border);
-  height: 100vh;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  height: calc(100vh - 32px);
   position: fixed;
-  left: 0;
-  top: 0;
+  left: 16px;
+  top: 16px;
+  bottom: 16px;
   z-index: 100;
   display: flex;
   flex-direction: column;
   padding: 24px;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 15px rgba(168, 85, 247, 0.05);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .main-content {
   flex: 1;
-  margin-left: var(--sidebar-width);
+  margin-left: calc(var(--active-sidebar-width, var(--sidebar-width)) + 32px);
   min-height: 100vh;
-  transition: all 0.3s ease;
+  transition: margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .main-header {
   height: var(--header-height);
   background: var(--glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 24px;
+  margin: 16px 16px 24px 16px;
   position: sticky;
-  top: 0;
+  top: 16px;
   z-index: 80;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25), 0 0 15px rgba(168, 85, 247, 0.03);
 }
 
 .page-wrapper {
-  padding: 32px;
+  padding: 0 16px 32px 16px;
 }
 
 /* Mobile Responsiveness */
 @media (max-width: 1024px) {
   .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(-100%) !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-right: 1px solid var(--border) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    width: 75% !important;
   }
   
   .sidebar.open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
 
   .main-content {
-    margin-left: 0;
+    margin-left: 0 !important;
   }
 
   .page-wrapper {
@@ -298,4 +315,113 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* Futuristic Topbar & Search Box */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 14px;
+  width: 280px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.search-box:focus-within {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--primary);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.15);
+  width: 320px;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-shortcut {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
+/* Notification Hub */
+.notification-btn {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.notification-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  transform: scale(1.05);
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: var(--secondary);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--secondary);
+}
+
+/* NavLinks and animations */
+.nav-link {
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--text) !important;
+}
+
+/* Glowing avatar */
+.avatar-glow {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+}
+
+.avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #030712;
+  border: 2px solid #030712;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
 }
