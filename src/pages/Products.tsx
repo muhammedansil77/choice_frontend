@@ -59,7 +59,10 @@ const ProductsPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentProduct?.name || !currentProduct?.priceInCoins) return;
+    if (!currentProduct?.name || currentProduct?.priceInCoins === undefined || currentProduct?.priceInCoins === null || currentProduct?.priceInCoins < 0) {
+      alert('Please fill out all required fields with valid values.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -94,9 +97,10 @@ const ProductsPage: React.FC = () => {
       }
       fetchData();
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving product:', error);
-      alert('Failed to save product');
+      const errMsg = error.response?.data?.message || 'Failed to save product';
+      alert(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -271,10 +275,15 @@ const ProductsPage: React.FC = () => {
                     style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white' }}
                     value={currentProduct?.category}
                     onChange={e => setCurrentProduct({...currentProduct, category: e.target.value})}
+                    required
                   >
-                    {categories.map(cat => (
-                      <option key={cat._id} value={cat.name} style={{ background: 'var(--surface)' }}>{cat.name}</option>
-                    ))}
+                    {categories.length === 0 ? (
+                      <option value="" style={{ background: 'var(--surface)' }}>No Categories Available</option>
+                    ) : (
+                      categories.map(cat => (
+                        <option key={cat._id} value={cat.name} style={{ background: 'var(--surface)' }}>{cat.name}</option>
+                      ))
+                    )}
                   </select>
                 </div>
               </div>
@@ -308,6 +317,7 @@ const ProductsPage: React.FC = () => {
                   style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white', minHeight: '100px', resize: 'vertical' }}
                   value={currentProduct?.description}
                   onChange={e => setCurrentProduct({...currentProduct, description: e.target.value})}
+                  required
                 />
               </div>
 
@@ -349,9 +359,16 @@ const ProductsPage: React.FC = () => {
                 </div>
               </div>
 
+              {categories.length === 0 && (
+                <div style={{ color: '#ef4444', fontSize: '13px', background: 'rgba(239, 68, 68, 0.1)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontWeight: '600' }}>⚠️ No Categories Available</span>
+                  <span>Please create a category under "Category Management" before adding products.</span>
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                 <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={closeModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isSubmitting}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isSubmitting || categories.length === 0}>
                   {isSubmitting ? 'Saving...' : (currentProduct?._id ? 'Update Product' : 'Create Product')}
                 </button>
               </div>
