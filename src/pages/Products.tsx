@@ -354,7 +354,7 @@ const ProductsPage: React.FC = () => {
                     background: 'rgba(255,255,255,0.01)'
                   }}
                 >
-                  <Upload size={24} color="var(--text-muted)" style={{ marginBottom: '8px', marginLeft: 'auto', marginRight: 'auto' }} />
+                  <Upload size={24} color="var(--text-muted)" style={{ display: 'block', marginBottom: '8px', marginLeft: 'auto', marginRight: 'auto' }} />
                   <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Click to upload or drag and drop images</p>
                 </div>
               </div>

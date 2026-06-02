@@ -81,9 +81,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar, isCollapsed, to
                 width: '40px', 
                 height: '40px', 
                 borderRadius: '12px', 
-                background: 'rgba(168, 85, 247, 0.1)', 
-                border: '1px solid rgba(168, 85, 247, 0.2)',
-                boxShadow: '0 0 10px rgba(168, 85, 247, 0.05)'
+                background: 'rgba(37, 99, 235, 0.1)', 
+                border: '1px solid rgba(37, 99, 235, 0.2)',
+                boxShadow: '0 0 10px rgba(37, 99, 235, 0.05)'
               }}
             >
               CE
@@ -109,7 +109,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar, isCollapsed, to
             height: '40px', 
             borderRadius: '50%', 
             background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            boxShadow: '0 0 10px rgba(168, 85, 247, 0.3)'
+            boxShadow: '0 0 10px rgba(37, 99, 235, 0.3)'
           }}></div>
           <div>
             <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}>Admin User</p>
@@ -134,7 +134,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar, isCollapsed, to
                 alignItems: 'center',
                 padding: '14px 16px',
                 borderRadius: '12px',
-                color: isActive ? '#f9fafb' : '#9ca3af',
+                color: isActive ? 'var(--primary)' : 'var(--text-muted)',
                 textDecoration: 'none',
                 marginBottom: '4px',
                 transition: 'all 0.3s ease',
