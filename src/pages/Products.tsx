@@ -59,8 +59,9 @@ const ProductsPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentProduct?.name || currentProduct?.priceInCoins === undefined || currentProduct?.priceInCoins === null || currentProduct?.priceInCoins < 0) {
-      alert('Please fill out all required fields with valid values.');
+    const priceNum = currentProduct?.priceInCoins === '' ? NaN : Number(currentProduct?.priceInCoins);
+    if (!currentProduct?.name?.trim() || isNaN(priceNum) || priceNum < 0) {
+      alert('Please enter a valid product name and price in coins.');
       return;
     }
 
@@ -69,9 +70,9 @@ const ProductsPage: React.FC = () => {
       const formData = new FormData();
       formData.append('name', currentProduct.name);
       formData.append('description', currentProduct.description || '');
-      formData.append('priceInCoins', String(currentProduct.priceInCoins));
+      formData.append('priceInCoins', String(priceNum));
       formData.append('category', currentProduct.category || '');
-      formData.append('stock', String(currentProduct.stock || 0));
+      formData.append('stock', String(Number(currentProduct.stock) || 0));
       formData.append('status', currentProduct.status || 'available');
       
       if (selectedFiles.length > 0) {
@@ -110,9 +111,9 @@ const ProductsPage: React.FC = () => {
     setCurrentProduct(product || {
       name: '',
       description: '',
-      priceInCoins: 0,
+      priceInCoins: '' as any,
       category: categories[0]?.name || '',
-      stock: 0,
+      stock: '' as any,
       status: 'available',
       images: []
     });
@@ -260,9 +261,11 @@ const ProductsPage: React.FC = () => {
                   <label className="form-label">Price (Coins) *</label>
                   <input 
                     type="number" 
-                    placeholder="0"
-                    value={currentProduct?.priceInCoins ?? 0}
-                    onChange={e => setCurrentProduct({...currentProduct, priceInCoins: Number(e.target.value)})}
+                    placeholder="e.g. 250"
+                    value={currentProduct?.priceInCoins ?? ''}
+                    onChange={e => setCurrentProduct({...currentProduct, priceInCoins: e.target.value === '' ? ('' as any) : Number(e.target.value)})}
+                    onFocus={e => e.target.select()}
+                    min="0"
                     required
                   />
                 </div>
@@ -289,9 +292,11 @@ const ProductsPage: React.FC = () => {
                   <label className="form-label">Initial Stock</label>
                   <input 
                     type="number" 
-                    placeholder="0"
-                    value={currentProduct?.stock ?? 0}
-                    onChange={e => setCurrentProduct({...currentProduct, stock: Number(e.target.value)})}
+                    placeholder="e.g. 50"
+                    value={currentProduct?.stock ?? ''}
+                    onChange={e => setCurrentProduct({...currentProduct, stock: e.target.value === '' ? ('' as any) : Number(e.target.value)})}
+                    onFocus={e => e.target.select()}
+                    min="0"
                   />
                 </div>
                 <div>
