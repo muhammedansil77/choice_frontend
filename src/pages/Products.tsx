@@ -18,7 +18,7 @@ const ProductsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState<Partial<Product> | null>(null);
+  const [currentProduct, setCurrentProduct] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // File Upload State
@@ -59,7 +59,7 @@ const ProductsPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const priceNum = currentProduct?.priceInCoins === '' ? NaN : Number(currentProduct?.priceInCoins);
+    const priceNum = parseFloat(String(currentProduct?.priceInCoins || ''));
     if (!currentProduct?.name?.trim() || isNaN(priceNum) || priceNum < 0) {
       alert('Please enter a valid product name and price in coins.');
       return;
@@ -68,11 +68,11 @@ const ProductsPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append('name', currentProduct.name);
+      formData.append('name', currentProduct.name.trim());
       formData.append('description', currentProduct.description || '');
       formData.append('priceInCoins', String(priceNum));
       formData.append('category', currentProduct.category || '');
-      formData.append('stock', String(Number(currentProduct.stock) || 0));
+      formData.append('stock', String(parseInt(String(currentProduct.stock || '0'), 10) || 0));
       formData.append('status', currentProduct.status || 'available');
       
       if (selectedFiles.length > 0) {
@@ -80,7 +80,7 @@ const ProductsPage: React.FC = () => {
           formData.append('images', file);
         });
       } else if (currentProduct.images) {
-        currentProduct.images.forEach(img => {
+        currentProduct.images.forEach((img: string) => {
           formData.append('images', img);
         });
       }
@@ -107,18 +107,27 @@ const ProductsPage: React.FC = () => {
     }
   };
 
-  const openModal = (product: Partial<Product> | null = null) => {
-    setCurrentProduct(product || {
-      name: '',
-      description: '',
-      priceInCoins: '' as any,
-      category: categories[0]?.name || '',
-      stock: '' as any,
-      status: 'available',
-      images: []
-    });
+  const openModal = (product: any = null) => {
+    if (product) {
+      setCurrentProduct({
+        ...product,
+        priceInCoins: product.priceInCoins !== undefined && product.priceInCoins !== null ? String(product.priceInCoins) : '',
+        stock: product.stock !== undefined && product.stock !== null ? String(product.stock) : ''
+      });
+      setImagePreviews(product.images || []);
+    } else {
+      setCurrentProduct({
+        name: '',
+        description: '',
+        priceInCoins: '',
+        category: categories[0]?.name || '',
+        stock: '',
+        status: 'available',
+        images: []
+      });
+      setImagePreviews([]);
+    }
     setSelectedFiles([]);
-    setImagePreviews(product?.images || []);
     setIsModalOpen(true);
   };
 
@@ -263,7 +272,7 @@ const ProductsPage: React.FC = () => {
                     type="number" 
                     placeholder="e.g. 250"
                     value={currentProduct?.priceInCoins ?? ''}
-                    onChange={e => setCurrentProduct({...currentProduct, priceInCoins: e.target.value === '' ? ('' as any) : Number(e.target.value)})}
+                    onChange={e => setCurrentProduct({...currentProduct, priceInCoins: e.target.value})}
                     onFocus={e => e.target.select()}
                     min="0"
                     required
@@ -294,7 +303,7 @@ const ProductsPage: React.FC = () => {
                     type="number" 
                     placeholder="e.g. 50"
                     value={currentProduct?.stock ?? ''}
-                    onChange={e => setCurrentProduct({...currentProduct, stock: e.target.value === '' ? ('' as any) : Number(e.target.value)})}
+                    onChange={e => setCurrentProduct({...currentProduct, stock: e.target.value})}
                     onFocus={e => e.target.select()}
                     min="0"
                   />
