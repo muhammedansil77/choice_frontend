@@ -8,9 +8,10 @@ import {
   Coins, 
   Plus, 
   Minus, 
-  X,
-  Filter,
-  TrendingUp
+  X, 
+  Filter, 
+  TrendingUp,
+  Edit2
 } from 'lucide-react';
 import api from '../services/api';
 import type { User } from '../types/index';
@@ -22,7 +23,7 @@ const UsersPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [coinAmount, setCoinAmount] = useState<number | string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<'add' | 'reclaim' | 'distribute' | 'mint' | 'create'>('add');
+  const [modalType, setModalType] = useState<'add' | 'reclaim' | 'distribute' | 'mint' | 'create' | 'edit_pool'>('add');
   const [actionLoading, setActionLoading] = useState(false);
   const [adminStats, setAdminStats] = useState<any>(null);
   
@@ -82,6 +83,29 @@ const UsersPage: React.FC = () => {
       return;
     }
 
+    if (modalType === 'edit_pool') {
+      const newTotal = Number(coinAmount);
+      if (isNaN(newTotal) || newTotal < 0) {
+        alert('Please enter a valid total pool amount');
+        return;
+      }
+      if (newTotal < (adminStats?.distributedCoins || 0)) {
+        alert(`Total Pool cannot be less than already distributed coins (${adminStats?.distributedCoins || 0})`);
+        return;
+      }
+      setActionLoading(true);
+      try {
+        await api.put('/coins/pool', { totalCoins: newTotal });
+        fetchStats();
+        closeModal();
+      } catch (error: any) {
+        alert(error.response?.data?.message || 'Failed to update total pool');
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+
     const amount = Number(coinAmount);
     if (amount <= 0) return;
     if ((modalType === 'add' || modalType === 'reclaim') && !selectedUser) return;
@@ -134,10 +158,14 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const openModal = (user: User | null, type: 'add' | 'reclaim' | 'distribute' | 'mint' | 'create') => {
+  const openModal = (user: User | null, type: 'add' | 'reclaim' | 'distribute' | 'mint' | 'create' | 'edit_pool') => {
     setSelectedUser(user);
     setModalType(type);
-    setCoinAmount('');
+    if (type === 'edit_pool') {
+      setCoinAmount(adminStats?.totalCoins !== undefined ? String(adminStats.totalCoins) : '');
+    } else {
+      setCoinAmount('');
+    }
     setIsModalOpen(true);
   };
 
@@ -198,6 +226,10 @@ const UsersPage: React.FC = () => {
           <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>View and manage platform users and their coin balances.</p>
         </div>
         <div className="users-actions-bar" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button className="btn btn-outline" onClick={() => openModal(null, 'edit_pool')} style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}>
+            <Edit2 size={18} />
+            <span>Edit Total Pool</span>
+          </button>
           <button className="btn btn-outline" onClick={() => openModal(null, 'mint')} style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
             <Plus size={20} />
             <span>Mint Supply</span>
@@ -214,9 +246,31 @@ const UsersPage: React.FC = () => {
       </div>
 
       <div className="stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
-        <div className="glass-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div 
+          className="glass-card" 
+          style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid rgba(37, 99, 235, 0.25)' }}
+          onClick={() => openModal(null, 'edit_pool')}
+          title="Click to edit Total Pool"
+        >
           <div>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Pool</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', margin: 0 }}>Total Pool</p>
+              <span style={{ 
+                background: 'rgba(37, 99, 235, 0.08)', 
+                border: '1px solid rgba(37, 99, 235, 0.2)', 
+                borderRadius: '6px', 
+                padding: '2px 8px', 
+                color: 'var(--primary)', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '4px', 
+                fontSize: '11px', 
+                fontWeight: '700' 
+              }}>
+                <Edit2 size={11} />
+                Edit
+              </span>
+            </div>
             <h4 style={{ fontSize: '20px', fontWeight: '700' }}>{adminStats?.totalCoins || 0}</h4>
           </div>
           <Coins size={24} color="var(--primary)" opacity={0.5} />
@@ -259,107 +313,93 @@ const UsersPage: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn btn-outline filter-btn" style={{ height: '44px', justifyContent: 'center' }}>
-            <Filter size={18} />
-            <span>Filters</span>
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn btn-outline" style={{ padding: '10px 16px' }}>
+              <Filter size={18} />
+              <span>Filters</span>
+            </button>
+          </div>
         </div>
 
-        <div className="table-container">
+        <div className="table-container" style={{ margin: 0 }}>
           <table className="admin-table">
             <thead>
               <tr>
                 <th>User Details</th>
                 <th>Role</th>
                 <th>Balance</th>
-                <th className="mobile-hide-cell">Join Date</th>
-                <th>Actions</th>
+                <th>Join Date</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>Loading users...</td></tr>
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>Loading users...</td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No users found.</td>
+                </tr>
               ) : filteredUsers.map((user) => (
                 <tr key={user._id}>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '200px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ 
-                        width: '40px', 
-                        height: '40px', 
-                        borderRadius: '12px', 
-                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: '700',
-                        fontSize: '16px',
-                        flexShrink: 0
+                        width: '36px', height: '36px', borderRadius: '10px', 
+                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: '700', color: 'white', fontSize: '14px'
                       }}>
-                        {user.name[0].toUpperCase()}
+                        {user.name.charAt(0).toUpperCase()}
                       </div>
-                      <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                        <p style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={user.name}>{user.name}</p>
-                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={user.email}>
-                          <Mail size={10} style={{ flexShrink: 0 }} /> {user.email}
-                        </p>
+                      <div>
+                        <div style={{ fontWeight: '600' }}>{user.name}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Mail size={12} />
+                          {user.email}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td>
                     <span style={{ 
-                      padding: '4px 10px', 
-                      borderRadius: '20px', 
-                      fontSize: '11px', 
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      background: user.role === 'admin' ? 'rgba(236, 72, 153, 0.1)' : 'rgba(99, 102, 241, 0.1)',
-                      color: user.role === 'admin' ? 'var(--secondary)' : 'var(--primary)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
+                      padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600',
+                      background: user.role === 'admin' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)',
+                      color: user.role === 'admin' ? 'var(--danger)' : 'var(--primary)',
+                      border: user.role === 'admin' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(99, 102, 241, 0.2)',
+                      display: 'inline-flex', alignItems: 'center', gap: '4px'
                     }}>
                       <Shield size={10} />
-                      {user.role}
+                      {user.role.toUpperCase()}
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Coins size={16} color="#f59e0b" />
-                      <span style={{ fontWeight: '700', color: '#f59e0b' }}>{user.coinBalance}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', color: '#f59e0b' }}>
+                      <Coins size={14} />
+                      <span>{user.coinBalance}</span>
                     </div>
                   </td>
-                  <td className="mobile-hide-cell" style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                  <td style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                  <td style={{ textAlign: 'right' }}>
+                    <div style={{ display: 'inline-flex', gap: '6px' }}>
                       <button 
                         onClick={() => openModal(user, 'add')}
-                        style={{ 
-                          width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border)', 
-                          background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}
+                        style={{ padding: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', color: 'var(--success)', borderRadius: '8px', cursor: 'pointer' }}
                         title="Add Coins"
                       >
                         <Plus size={16} />
                       </button>
                       <button 
                         onClick={() => openModal(user, 'reclaim')}
-                        style={{ 
-                          width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border)', 
-                          background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}
+                        style={{ padding: '6px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger)', borderRadius: '8px', cursor: 'pointer' }}
                         title="Reclaim Coins"
                       >
                         <Minus size={16} />
                       </button>
-                      <button style={{ 
-                        width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border)', 
-                        background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                      <button style={{ padding: '6px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                         <MoreVertical size={16} />
                       </button>
                     </div>
@@ -374,17 +414,19 @@ const UsersPage: React.FC = () => {
       {/* Modal Overlay */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-card animate-fade-in user-modal-box" style={{ width: '440px' }}>
+          <div className="modal-card animate-fade-in user-modal-box" style={{ width: '450px' }}>
             <div className="modal-header">
               <h3 className="modal-title">
-                {modalType === 'create' ? 'Add New User' : (modalType === 'mint' ? 'Mint New Supply' : (modalType === 'distribute' ? 'Global Coin Distribution' : (modalType === 'add' ? 'Add Coins' : 'Reclaim Coins')))}
+                {modalType === 'edit_pool' ? 'Edit Total Coin Pool' : (modalType === 'create' ? 'Add New User' : (modalType === 'mint' ? 'Mint New Supply' : (modalType === 'distribute' ? 'Global Coin Distribution' : (modalType === 'add' ? 'Add Coins' : 'Reclaim Coins'))))}
               </h3>
               <button type="button" className="modal-close-btn" onClick={closeModal}>
                 <X size={20} />
               </button>
             </div>
             <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '20px', marginTop: '-8px' }}>
-              {modalType === 'create'
+              {modalType === 'edit_pool'
+                ? 'Directly set the Total Coin Supply. The remaining coin reserve will be updated automatically.'
+                : modalType === 'create'
                 ? 'Register a new user manually in the system.'
                 : modalType === 'mint' 
                 ? 'Create new coins into the central admin supply.'
@@ -392,6 +434,21 @@ const UsersPage: React.FC = () => {
                 ? 'This will add coins to EVERY user from the admin pool.' 
                 : modalType === 'add' ? `Sending coins to ${selectedUser?.name}` : `Reclaiming coins from ${selectedUser?.name}`}
             </p>
+
+            {modalType === 'edit_pool' && (
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#64748b' }}>Already Distributed:</span>
+                  <span style={{ fontWeight: '700', color: '#0f172a' }}>{adminStats?.distributedCoins || 0} coins</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#64748b' }}>New Remaining Supply:</span>
+                  <span style={{ fontWeight: '700', color: '#10b981' }}>
+                    {Math.max(0, (Number(coinAmount) || 0) - (adminStats?.distributedCoins || 0)).toLocaleString()} coins
+                  </span>
+                </div>
+              </div>
+            )}
 
             {modalType === 'create' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
@@ -426,7 +483,9 @@ const UsersPage: React.FC = () => {
               </div>
             ) : (
               <div style={{ marginBottom: '20px' }}>
-                <label className="form-label">Amount to {modalType} *</label>
+                <label className="form-label">
+                  {modalType === 'edit_pool' ? 'New Total Coin Pool (Coins) *' : `Amount to ${modalType} *`}
+                </label>
                 <div style={{ position: 'relative' }}>
                   <Coins size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#d97706' }} />
                   <input 
@@ -435,7 +494,8 @@ const UsersPage: React.FC = () => {
                     value={coinAmount}
                     onChange={(e) => setCoinAmount(e.target.value)}
                     onFocus={(e) => e.target.select()}
-                    placeholder="0"
+                    placeholder="e.g. 1000000"
+                    min={modalType === 'edit_pool' ? String(adminStats?.distributedCoins || 0) : "0"}
                     autoFocus
                   />
                 </div>
@@ -449,12 +509,12 @@ const UsersPage: React.FC = () => {
                 style={{ 
                   flex: 1, 
                   padding: '12px',
-                  background: modalType === 'create' ? 'var(--primary)' : (modalType === 'mint' ? 'var(--accent)' : (modalType === 'distribute' ? 'var(--primary)' : (modalType === 'add' ? 'var(--success)' : 'var(--danger)'))) 
+                  background: modalType === 'create' ? 'var(--primary)' : (modalType === 'edit_pool' ? '#2563eb' : (modalType === 'mint' ? 'var(--accent)' : (modalType === 'distribute' ? 'var(--primary)' : (modalType === 'add' ? 'var(--success)' : 'var(--danger)'))))
                 }}
                 onClick={handleCoinAction}
                 disabled={actionLoading}
               >
-                {actionLoading ? 'Processing...' : (modalType === 'create' ? 'Create User' : (modalType === 'mint' ? 'Mint Now' : (modalType === 'distribute' ? 'Distribute Now' : `${modalType === 'add' ? 'Send' : 'Reclaim'} Coins`)))}
+                {actionLoading ? 'Processing...' : (modalType === 'edit_pool' ? 'Save Total Pool' : (modalType === 'create' ? 'Create User' : (modalType === 'mint' ? 'Mint Now' : (modalType === 'distribute' ? 'Distribute Now' : `${modalType === 'add' ? 'Send' : 'Reclaim'} Coins`))))}
               </button>
             </div>
           </div>
