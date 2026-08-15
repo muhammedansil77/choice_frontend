@@ -373,22 +373,17 @@ const UsersPage: React.FC = () => {
 
       {/* Modal Overlay */}
       {isModalOpen && (
-        <div style={{ 
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)',
-          padding: '16px'
-        }}>
-          <div className="glass-card animate-fade-in user-modal-box" style={{ width: '400px', position: 'relative', maxWidth: '100%' }}>
-            <button 
-              onClick={closeModal}
-              style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-            >
-              <X size={20} />
-            </button>
-            <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>
-              {modalType === 'create' ? 'Add New User' : (modalType === 'mint' ? 'Mint New Supply' : (modalType === 'distribute' ? 'Global Coin Distribution' : (modalType === 'add' ? 'Add Coins' : 'Reclaim Coins')))}
-            </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
+        <div className="modal-overlay">
+          <div className="modal-card animate-fade-in user-modal-box" style={{ width: '440px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                {modalType === 'create' ? 'Add New User' : (modalType === 'mint' ? 'Mint New Supply' : (modalType === 'distribute' ? 'Global Coin Distribution' : (modalType === 'add' ? 'Add Coins' : 'Reclaim Coins')))}
+              </h3>
+              <button type="button" className="modal-close-btn" onClick={closeModal}>
+                <X size={20} />
+              </button>
+            </div>
+            <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '20px', marginTop: '-8px' }}>
               {modalType === 'create'
                 ? 'Register a new user manually in the system.'
                 : modalType === 'mint' 
@@ -399,39 +394,44 @@ const UsersPage: React.FC = () => {
             </p>
 
             {modalType === 'create' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-                <input 
-                  type="text" placeholder="Full Name" 
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
-                  value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                />
-                <input 
-                  type="email" placeholder="Email Address" 
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
-                  value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                />
-                <input 
-                  type="password" placeholder="Password" 
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
-                  value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                />
-                <input 
-                  type="text" placeholder="Phone Number" 
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'white' }}
-                  value={newUser.phoneNumber} onChange={(e) => setNewUser({...newUser, phoneNumber: e.target.value})}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+                <div>
+                  <label className="form-label">Full Name *</label>
+                  <input 
+                    type="text" placeholder="e.g. John Doe" 
+                    value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Email Address *</label>
+                  <input 
+                    type="email" placeholder="name@example.com" 
+                    value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Password *</label>
+                  <input 
+                    type="password" placeholder="••••••••" 
+                    value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Phone Number</label>
+                  <input 
+                    type="text" placeholder="+91 9876543210" 
+                    value={newUser.phoneNumber} onChange={(e) => setNewUser({...newUser, phoneNumber: e.target.value})}
+                  />
+                </div>
               </div>
             ) : (
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Amount to {modalType}</label>
+              <div style={{ marginBottom: '20px' }}>
+                <label className="form-label">Amount to {modalType} *</label>
                 <div style={{ position: 'relative' }}>
-                  <Coins size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#f59e0b' }} />
+                  <Coins size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#d97706' }} />
                   <input 
                     type="number" 
-                    style={{ 
-                      width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', 
-                      borderRadius: '12px', padding: '12px 12px 12px 48px', color: 'white', fontSize: '18px', fontWeight: '700'
-                    }}
+                    style={{ paddingLeft: '44px', fontSize: '18px', fontWeight: '700' }}
                     value={coinAmount}
                     onChange={(e) => setCoinAmount(e.target.value)}
                     onFocus={(e) => e.target.select()}
@@ -443,11 +443,12 @@ const UsersPage: React.FC = () => {
             )}
 
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={closeModal}>Cancel</button>
+              <button className="btn btn-outline" style={{ flex: 1, padding: '12px' }} onClick={closeModal}>Cancel</button>
               <button 
                 className="btn btn-primary" 
                 style={{ 
                   flex: 1, 
+                  padding: '12px',
                   background: modalType === 'create' ? 'var(--primary)' : (modalType === 'mint' ? 'var(--accent)' : (modalType === 'distribute' ? 'var(--primary)' : (modalType === 'add' ? 'var(--success)' : 'var(--danger)'))) 
                 }}
                 onClick={handleCoinAction}

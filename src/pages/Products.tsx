@@ -234,100 +234,96 @@ const ProductsPage: React.FC = () => {
 
       {/* Product Modal */}
       {isModalOpen && (
-        <div style={{ 
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)'
-        }}>
-          <div className="glass-card animate-fade-in" style={{ width: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: '700' }}>{currentProduct?._id ? 'Edit Product' : 'Add New Product'}</h2>
-              <button onClick={closeModal} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <X size={24} />
+        <div className="modal-overlay">
+          <div className="modal-card animate-fade-in" style={{ width: '520px' }}>
+            <div className="modal-header">
+              <h2 className="modal-title">{currentProduct?._id ? 'Edit Product' : 'Add New Product'}</h2>
+              <button type="button" className="modal-close-btn" onClick={closeModal}>
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Product Name</label>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div>
+                <label className="form-label">Product Name *</label>
                 <input 
                   type="text" 
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white' }}
-                  value={currentProduct?.name}
+                  placeholder="e.g. 12W LED Recessed Panel Light"
+                  value={currentProduct?.name || ''}
                   onChange={e => setCurrentProduct({...currentProduct, name: e.target.value})}
                   required
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Price (Coins)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label className="form-label">Price (Coins) *</label>
                   <input 
                     type="number" 
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white' }}
-                    value={currentProduct?.priceInCoins}
+                    placeholder="0"
+                    value={currentProduct?.priceInCoins ?? 0}
                     onChange={e => setCurrentProduct({...currentProduct, priceInCoins: Number(e.target.value)})}
                     required
                   />
                 </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Category</label>
+                <div>
+                  <label className="form-label">Category *</label>
                   <select 
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white' }}
-                    value={currentProduct?.category}
+                    value={currentProduct?.category || ''}
                     onChange={e => setCurrentProduct({...currentProduct, category: e.target.value})}
                     required
                   >
                     {categories.length === 0 ? (
-                      <option value="" style={{ background: 'var(--surface)' }}>No Categories Available</option>
+                      <option value="">No Categories Available</option>
                     ) : (
                       categories.map(cat => (
-                        <option key={cat._id} value={cat.name} style={{ background: 'var(--surface)' }}>{cat.name}</option>
+                        <option key={cat._id} value={cat.name}>{cat.name}</option>
                       ))
                     )}
                   </select>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Initial Stock</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label className="form-label">Initial Stock</label>
                   <input 
                     type="number" 
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white' }}
-                    value={currentProduct?.stock}
+                    placeholder="0"
+                    value={currentProduct?.stock ?? 0}
                     onChange={e => setCurrentProduct({...currentProduct, stock: Number(e.target.value)})}
                   />
                 </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</label>
+                <div>
+                  <label className="form-label">Status</label>
                   <select 
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white' }}
-                    value={currentProduct?.status}
+                    value={currentProduct?.status || 'available'}
                     onChange={e => setCurrentProduct({...currentProduct, status: e.target.value as any})}
                   >
-                    <option value="available" style={{ background: 'var(--surface)' }}>Available</option>
-                    <option value="unavailable" style={{ background: 'var(--surface)' }}>Unavailable</option>
+                    <option value="available">Available</option>
+                    <option value="unavailable">Unavailable</option>
                   </select>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Description</label>
+              <div>
+                <label className="form-label">Description *</label>
                 <textarea 
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white', minHeight: '100px', resize: 'vertical' }}
-                  value={currentProduct?.description}
+                  placeholder="Describe technical specifications, wattage, color temperature, and features..."
+                  style={{ width: '100%', minHeight: '90px', padding: '12px', resize: 'vertical' }}
+                  value={currentProduct?.description || ''}
                   onChange={e => setCurrentProduct({...currentProduct, description: e.target.value})}
                   required
                 />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Images</label>
+              <div>
+                <label className="form-label">Product Images</label>
                 
                 {imagePreviews.length > 0 && (
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
                     {imagePreviews.map((url, idx) => (
-                      <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                      <div key={idx} style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                         <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     ))}
@@ -344,32 +340,26 @@ const ProductsPage: React.FC = () => {
                 />
                 
                 <div 
+                  className="image-dropzone"
                   onClick={() => document.getElementById('product-image-upload')?.click()}
-                  style={{ 
-                    border: '2px dashed var(--border)', 
-                    borderRadius: '12px', 
-                    padding: '24px', 
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    background: 'rgba(255,255,255,0.01)'
-                  }}
                 >
-                  <Upload size={24} color="var(--text-muted)" style={{ display: 'block', marginBottom: '8px', marginLeft: 'auto', marginRight: 'auto' }} />
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Click to upload or drag and drop images</p>
+                  <Upload size={24} color="#2563eb" style={{ display: 'block', marginBottom: '8px', marginLeft: 'auto', marginRight: 'auto' }} />
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', margin: '0 0 2px 0' }}>Click to upload product images</p>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>PNG, JPG or WebP up to 10MB</p>
                 </div>
               </div>
 
               {categories.length === 0 && (
-                <div style={{ color: '#ef4444', fontSize: '13px', background: 'rgba(239, 68, 68, 0.1)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontWeight: '600' }}>⚠️ No Categories Available</span>
+                <div style={{ color: '#b91c1c', fontSize: '13px', background: '#fef2f2', padding: '12px 14px', borderRadius: '10px', border: '1px solid #fecaca', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ fontWeight: '700' }}>⚠️ No Categories Available</span>
                   <span>Please create a category under "Category Management" before adding products.</span>
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={closeModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isSubmitting || categories.length === 0}>
-                  {isSubmitting ? 'Saving...' : (currentProduct?._id ? 'Update Product' : 'Create Product')}
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '12px' }} onClick={closeModal}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px' }} disabled={isSubmitting || categories.length === 0}>
+                  {isSubmitting ? 'Saving Product...' : (currentProduct?._id ? 'Update Product' : 'Create Product')}
                 </button>
               </div>
             </form>

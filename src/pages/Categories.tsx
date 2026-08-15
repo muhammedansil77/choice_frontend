@@ -204,40 +204,33 @@ const Categories: React.FC = () => {
       </div>
 
       {isModalOpen && (
-        <div style={{ 
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)'
-        }}>
-          <div className="glass-card animate-fade-in" style={{ width: '400px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '20px' }}>{editingCategory ? 'Edit Category' : 'New Category'}</h3>
-              <button onClick={closeModal} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+        <div className="modal-overlay">
+          <div className="modal-card animate-fade-in" style={{ width: '440px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">{editingCategory ? 'Edit Category' : 'New Category'}</h3>
+              <button type="button" className="modal-close-btn" onClick={closeModal}>
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleAddCategory}>
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>CATEGORY NAME</label>
+              <div style={{ marginBottom: '20px' }}>
+                <label className="form-label">Category Name *</label>
                 <input 
                   type="text" 
-                  style={{ 
-                    width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', 
-                    borderRadius: '12px', padding: '12px', color: 'white', fontSize: '16px'
-                  }}
                   value={categoryName}
                   onChange={(e) => setCategoryName(e.target.value)}
-                  placeholder="e.g. Electronics, Fashion..."
+                  placeholder="e.g. Cables, Switches, LED Lighting..."
                   autoFocus
                 />
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={closeModal}>Cancel</button>
+                <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '12px' }} onClick={closeModal}>Cancel</button>
                 <button 
                   type="submit" 
                   className="btn btn-primary" 
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, padding: '12px' }}
                   disabled={actionLoading || !categoryName.trim()}
                 >
                   {actionLoading ? 'Saving...' : (editingCategory ? 'Update' : 'Create')}
