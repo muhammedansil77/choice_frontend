@@ -7,6 +7,7 @@ import {
   Package, 
   Tags, 
   ShoppingCart, 
+  IndianRupee,
   LogOut,
   ChevronRight,
   PanelLeftClose,
@@ -29,6 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar, isCollapsed, to
     { name: 'Products', path: '/products', icon: <Package size={20} /> },
     { name: 'Categories', path: '/categories', icon: <Tags size={20} /> },
     { name: 'Orders', path: '/orders', icon: <ShoppingCart size={20} /> },
+    { name: 'Cash Payouts', path: '/withdrawals', icon: <IndianRupee size={20} /> },
   ];
 
   const handleLogout = () => {

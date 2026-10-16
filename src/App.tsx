@@ -6,6 +6,7 @@ import Products from './pages/Products';
 import Login from './pages/Login';
 import Categories from './pages/Categories';
 import Orders from './pages/Orders';
+import Withdrawals from './pages/Withdrawals';
 
 // Simple Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -29,6 +30,7 @@ function App() {
           <Route path="products" element={<Products />} />
           <Route path="categories" element={<Categories />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="withdrawals" element={<Withdrawals />} />
         </Route>
       </Routes>
     </Router>
