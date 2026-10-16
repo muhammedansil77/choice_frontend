@@ -83,7 +83,7 @@ const Layout: React.FC = () => {
           </div>
         </header>
 
-        <div className="page-wrapper animate-fade-in">
+        <div className="page-wrapper">
           <Outlet />
         </div>
       </main>

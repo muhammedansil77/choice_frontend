@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Plus, 
   Search, 
@@ -243,9 +244,9 @@ const ProductsPage: React.FC = () => {
       </div>
 
       {/* Product Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card animate-fade-in" style={{ width: '520px' }}>
+      {isModalOpen && createPortal(
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
+          <div className="modal-card animate-fade-in" style={{ width: '560px', maxWidth: '95vw' }}>
             <div className="modal-header">
               <h2 className="modal-title">{currentProduct?._id ? 'Edit Product' : 'Add New Product'}</h2>
               <button type="button" className="modal-close-btn" onClick={closeModal}>
@@ -253,124 +254,126 @@ const ProductsPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div>
-                <label className="form-label">Product Name *</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. 12W LED Recessed Panel Light"
-                  value={currentProduct?.name || ''}
-                  onChange={e => setCurrentProduct({...currentProduct, name: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '4px', paddingBottom: '4px' }}>
                 <div>
-                  <label className="form-label">Price (Coins) *</label>
+                  <label className="form-label">Product Name *</label>
                   <input 
-                    type="number" 
-                    placeholder="e.g. 250"
-                    value={currentProduct?.priceInCoins ?? ''}
-                    onChange={e => setCurrentProduct({...currentProduct, priceInCoins: e.target.value})}
-                    onFocus={e => e.target.select()}
-                    min="0"
+                    type="text" 
+                    placeholder="e.g. 12W LED Recessed Panel Light"
+                    value={currentProduct?.name || ''}
+                    onChange={e => setCurrentProduct({...currentProduct, name: e.target.value})}
                     required
                   />
                 </div>
-                <div>
-                  <label className="form-label">Category *</label>
-                  <select 
-                    value={currentProduct?.category || ''}
-                    onChange={e => setCurrentProduct({...currentProduct, category: e.target.value})}
-                    required
-                  >
-                    {categories.length === 0 ? (
-                      <option value="">No Categories Available</option>
-                    ) : (
-                      categories.map(cat => (
-                        <option key={cat._id} value={cat.name}>{cat.name}</option>
-                      ))
-                    )}
-                  </select>
-                </div>
-              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label className="form-label">Price (Coins) *</label>
+                    <input 
+                      type="number" 
+                      placeholder="e.g. 250"
+                      value={currentProduct?.priceInCoins ?? ''}
+                      onChange={e => setCurrentProduct({...currentProduct, priceInCoins: e.target.value})}
+                      onFocus={e => e.target.select()}
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Category *</label>
+                    <select 
+                      value={currentProduct?.category || ''}
+                      onChange={e => setCurrentProduct({...currentProduct, category: e.target.value})}
+                      required
+                    >
+                      {categories.length === 0 ? (
+                        <option value="">No Categories Available</option>
+                      ) : (
+                        categories.map(cat => (
+                          <option key={cat._id} value={cat.name}>{cat.name}</option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label className="form-label">Initial Stock</label>
+                    <input 
+                      type="number" 
+                      placeholder="e.g. 50"
+                      value={currentProduct?.stock ?? ''}
+                      onChange={e => setCurrentProduct({...currentProduct, stock: e.target.value})}
+                      onFocus={e => e.target.select()}
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Status</label>
+                    <select 
+                      value={currentProduct?.status || 'available'}
+                      onChange={e => setCurrentProduct({...currentProduct, status: e.target.value as any})}
+                    >
+                      <option value="available">Available</option>
+                      <option value="unavailable">Unavailable</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="form-label">Initial Stock</label>
-                  <input 
-                    type="number" 
-                    placeholder="e.g. 50"
-                    value={currentProduct?.stock ?? ''}
-                    onChange={e => setCurrentProduct({...currentProduct, stock: e.target.value})}
-                    onFocus={e => e.target.select()}
-                    min="0"
+                  <label className="form-label">Description *</label>
+                  <textarea 
+                    placeholder="Describe technical specifications, wattage, color temperature, and features..."
+                    style={{ width: '100%', minHeight: '85px', padding: '12px', resize: 'vertical' }}
+                    value={currentProduct?.description || ''}
+                    onChange={e => setCurrentProduct({...currentProduct, description: e.target.value})}
+                    required
                   />
                 </div>
+
                 <div>
-                  <label className="form-label">Status</label>
-                  <select 
-                    value={currentProduct?.status || 'available'}
-                    onChange={e => setCurrentProduct({...currentProduct, status: e.target.value as any})}
+                  <label className="form-label">Product Images</label>
+                  
+                  {imagePreviews.length > 0 && (
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                      {imagePreviews.map((url, idx) => (
+                        <div key={idx} style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                          <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <input 
+                    type="file" 
+                    id="product-image-upload" 
+                    multiple 
+                    accept="image/*" 
+                    onChange={handleFileChange} 
+                    style={{ display: 'none' }} 
+                  />
+                  
+                  <div 
+                    className="image-dropzone"
+                    onClick={() => document.getElementById('product-image-upload')?.click()}
                   >
-                    <option value="available">Available</option>
-                    <option value="unavailable">Unavailable</option>
-                  </select>
+                    <Upload size={24} color="#2563eb" style={{ display: 'block', marginBottom: '8px', marginLeft: 'auto', marginRight: 'auto' }} />
+                    <p style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', margin: '0 0 2px 0' }}>Click to upload product images</p>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>PNG, JPG or WebP up to 10MB</p>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="form-label">Description *</label>
-                <textarea 
-                  placeholder="Describe technical specifications, wattage, color temperature, and features..."
-                  style={{ width: '100%', minHeight: '90px', padding: '12px', resize: 'vertical' }}
-                  value={currentProduct?.description || ''}
-                  onChange={e => setCurrentProduct({...currentProduct, description: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="form-label">Product Images</label>
-                
-                {imagePreviews.length > 0 && (
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                    {imagePreviews.map((url, idx) => (
-                      <div key={idx} style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                        <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    ))}
+                {categories.length === 0 && (
+                  <div style={{ color: '#b91c1c', fontSize: '13px', background: '#fef2f2', padding: '12px 14px', borderRadius: '10px', border: '1px solid #fecaca', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontWeight: '700' }}>⚠️ No Categories Available</span>
+                    <span>Please create a category under "Category Management" before adding products.</span>
                   </div>
                 )}
-                
-                <input 
-                  type="file" 
-                  id="product-image-upload" 
-                  multiple 
-                  accept="image/*" 
-                  onChange={handleFileChange} 
-                  style={{ display: 'none' }} 
-                />
-                
-                <div 
-                  className="image-dropzone"
-                  onClick={() => document.getElementById('product-image-upload')?.click()}
-                >
-                  <Upload size={24} color="#2563eb" style={{ display: 'block', marginBottom: '8px', marginLeft: 'auto', marginRight: 'auto' }} />
-                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', margin: '0 0 2px 0' }}>Click to upload product images</p>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>PNG, JPG or WebP up to 10MB</p>
-                </div>
               </div>
 
-              {categories.length === 0 && (
-                <div style={{ color: '#b91c1c', fontSize: '13px', background: '#fef2f2', padding: '12px 14px', borderRadius: '10px', border: '1px solid #fecaca', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontWeight: '700' }}>⚠️ No Categories Available</span>
-                  <span>Please create a category under "Category Management" before adding products.</span>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', flexShrink: 0 }}>
                 <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '12px' }} onClick={closeModal}>Cancel</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px' }} disabled={isSubmitting || categories.length === 0}>
                   {isSubmitting ? 'Saving Product...' : (currentProduct?._id ? 'Update Product' : 'Create Product')}
@@ -378,7 +381,8 @@ const ProductsPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

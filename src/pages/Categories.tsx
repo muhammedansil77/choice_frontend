@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Tags, 
   Plus, 
@@ -304,9 +305,9 @@ const Categories: React.FC = () => {
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card animate-fade-in" style={{ width: '480px' }}>
+      {isModalOpen && createPortal(
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
+          <div className="modal-card animate-fade-in" style={{ width: '480px', maxWidth: '95vw' }}>
             <div className="modal-header">
               <h3 className="modal-title">{editingCategory ? 'Edit Category' : 'New Category'}</h3>
               <button type="button" className="modal-close-btn" onClick={closeModal}>
@@ -314,95 +315,97 @@ const Categories: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddCategory}>
-              <div style={{ marginBottom: '20px' }}>
-                <label className="form-label">Category Name *</label>
-                <input 
-                  type="text" 
-                  value={categoryName}
-                  onChange={(e) => setCategoryName(e.target.value)}
-                  placeholder="e.g. Cables, Switches, LED Lighting..."
-                  autoFocus
-                  required
-                />
-              </div>
+            <form onSubmit={handleAddCategory} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '4px', paddingBottom: '4px' }}>
+                <div>
+                  <label className="form-label">Category Name *</label>
+                  <input 
+                    type="text" 
+                    value={categoryName}
+                    onChange={(e) => setCategoryName(e.target.value)}
+                    placeholder="e.g. Cables, Switches, LED Lighting..."
+                    autoFocus
+                    required
+                  />
+                </div>
 
-              {/* Category Image Upload */}
-              <div style={{ marginBottom: '24px' }}>
-                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Category Image</span>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Recommended: 1:1 square</span>
-                </label>
-
-                {imagePreview ? (
-                  <div style={{ position: 'relative', width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                    <img 
-                      src={imagePreview} 
-                      alt="Category preview" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    />
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      title="Remove image"
-                      style={{
-                        position: 'absolute',
-                        top: '6px',
-                        right: '6px',
-                        background: 'rgba(0,0,0,0.65)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '26px',
-                        height: '26px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-                ) : (
-                  <label style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '2px dashed var(--border)',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    cursor: 'pointer',
-                    background: 'rgba(255,255,255,0.02)',
-                    transition: 'all 0.2s ease'
-                  }}>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleFileChange} 
-                      style={{ display: 'none' }} 
-                    />
-                    <div style={{ 
-                      width: '44px', 
-                      height: '44px', 
-                      borderRadius: '50%', 
-                      background: 'rgba(99, 102, 241, 0.1)', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      color: 'var(--primary)',
-                      marginBottom: '10px'
-                    }}>
-                      <Upload size={20} />
-                    </div>
-                    <span style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Click to upload category image</span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>PNG, JPG, WEBP up to 5MB</span>
+                {/* Category Image Upload */}
+                <div>
+                  <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Category Image</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Recommended: 1:1 square</span>
                   </label>
-                )}
+
+                  {imagePreview ? (
+                    <div style={{ position: 'relative', width: '120px', height: '120px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                      <img 
+                        src={imagePreview} 
+                        alt="Category preview" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        title="Remove image"
+                        style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          background: 'rgba(0,0,0,0.65)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '26px',
+                          height: '26px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px dashed var(--border)',
+                      borderRadius: '12px',
+                      padding: '24px',
+                      cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.02)',
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleFileChange} 
+                        style={{ display: 'none' }} 
+                      />
+                      <div style={{ 
+                        width: '44px', 
+                        height: '44px', 
+                        borderRadius: '50%', 
+                        background: 'rgba(99, 102, 241, 0.1)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        color: 'var(--primary)',
+                        marginBottom: '10px'
+                      }}>
+                        <Upload size={20} />
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Click to upload category image</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>PNG, JPG, WEBP up to 5MB</span>
+                    </label>
+                  )}
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', flexShrink: 0 }}>
                 <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '12px' }} onClick={closeModal}>Cancel</button>
                 <button 
                   type="submit" 
@@ -415,7 +418,8 @@ const Categories: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -488,37 +488,49 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, selec
 
 /* Modern High-End Modal Styles */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 999999 !important;
+  padding: 20px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
 .modal-card {
   background: #ffffff !important;
   border-radius: 20px !important;
   border: 1px solid rgba(226, 232, 240, 0.9) !important;
-  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(15, 23, 42, 0.05) !important;
-  padding: 28px !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.05) !important;
+  padding: 24px 28px !important;
   color: #0f172a !important;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
+  max-height: calc(100vh - 40px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding-bottom: 14px;
   border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
 }
 
 .modal-title {

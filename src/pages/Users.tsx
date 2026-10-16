@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Search, 
   UserPlus, 
@@ -412,9 +413,9 @@ const UsersPage: React.FC = () => {
       </div>
 
       {/* Modal Overlay */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card animate-fade-in user-modal-box" style={{ width: '450px' }}>
+      {isModalOpen && createPortal(
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
+          <div className="modal-card animate-fade-in user-modal-box" style={{ width: '480px', maxWidth: '95vw' }}>
             <div className="modal-header">
               <h3 className="modal-title">
                 {modalType === 'edit_pool' ? 'Edit Total Coin Pool' : (modalType === 'create' ? 'Add New User' : (modalType === 'mint' ? 'Mint New Supply' : (modalType === 'distribute' ? 'Global Coin Distribution' : (modalType === 'add' ? 'Add Coins' : 'Reclaim Coins'))))}
@@ -423,86 +424,89 @@ const UsersPage: React.FC = () => {
                 <X size={20} />
               </button>
             </div>
-            <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '20px', marginTop: '-8px' }}>
-              {modalType === 'edit_pool'
-                ? 'Directly set the Total Coin Supply. The remaining coin reserve will be updated automatically.'
-                : modalType === 'create'
-                ? 'Register a new user manually in the system.'
-                : modalType === 'mint' 
-                ? 'Create new coins into the central admin supply.'
-                : modalType === 'distribute' 
-                ? 'This will add coins to EVERY user from the admin pool.' 
-                : modalType === 'add' ? `Sending coins to ${selectedUser?.name}` : `Reclaiming coins from ${selectedUser?.name}`}
-            </p>
+            
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', paddingRight: '4px' }}>
+              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '18px', marginTop: '0' }}>
+                {modalType === 'edit_pool'
+                  ? 'Directly set the Total Coin Supply. The remaining coin reserve will be updated automatically.'
+                  : modalType === 'create'
+                  ? 'Register a new user manually in the system.'
+                  : modalType === 'mint' 
+                  ? 'Create new coins into the central admin supply.'
+                  : modalType === 'distribute' 
+                  ? 'This will add coins to EVERY user from the admin pool.' 
+                  : modalType === 'add' ? `Sending coins to ${selectedUser?.name}` : `Reclaiming coins from ${selectedUser?.name}`}
+              </p>
 
-            {modalType === 'edit_pool' && (
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: '#64748b' }}>Already Distributed:</span>
-                  <span style={{ fontWeight: '700', color: '#0f172a' }}>{adminStats?.distributedCoins || 0} coins</span>
+              {modalType === 'edit_pool' && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: '#64748b' }}>Already Distributed:</span>
+                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{adminStats?.distributedCoins || 0} coins</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: '#64748b' }}>New Remaining Supply:</span>
+                    <span style={{ fontWeight: '700', color: '#10b981' }}>
+                      {Math.max(0, (Number(coinAmount) || 0) - (adminStats?.distributedCoins || 0)).toLocaleString()} coins
+                    </span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: '#64748b' }}>New Remaining Supply:</span>
-                  <span style={{ fontWeight: '700', color: '#10b981' }}>
-                    {Math.max(0, (Number(coinAmount) || 0) - (adminStats?.distributedCoins || 0)).toLocaleString()} coins
-                  </span>
-                </div>
-              </div>
-            )}
+              )}
 
-            {modalType === 'create' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
-                <div>
-                  <label className="form-label">Full Name *</label>
-                  <input 
-                    type="text" placeholder="e.g. John Doe" 
-                    value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                  />
+              {modalType === 'create' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+                  <div>
+                    <label className="form-label">Full Name *</label>
+                    <input 
+                      type="text" placeholder="e.g. John Doe" 
+                      value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Email Address *</label>
+                    <input 
+                      type="email" placeholder="name@example.com" 
+                      value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Password *</label>
+                    <input 
+                      type="password" placeholder="••••••••" 
+                      value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Phone Number</label>
+                    <input 
+                      type="text" placeholder="+91 9876543210" 
+                      value={newUser.phoneNumber} onChange={(e) => setNewUser({...newUser, phoneNumber: e.target.value})}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="form-label">Email Address *</label>
-                  <input 
-                    type="email" placeholder="name@example.com" 
-                    value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  />
+              ) : (
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="form-label">
+                    {modalType === 'edit_pool' ? 'New Total Coin Pool (Coins) *' : `Amount to ${modalType} *`}
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Coins size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#d97706' }} />
+                    <input 
+                      type="number" 
+                      style={{ paddingLeft: '44px', fontSize: '18px', fontWeight: '700' }}
+                      value={coinAmount}
+                      onChange={(e) => setCoinAmount(e.target.value)}
+                      onFocus={(e) => e.target.select()}
+                      placeholder="e.g. 1000000"
+                      min={modalType === 'edit_pool' ? String(adminStats?.distributedCoins || 0) : "0"}
+                      autoFocus
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="form-label">Password *</label>
-                  <input 
-                    type="password" placeholder="••••••••" 
-                    value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Phone Number</label>
-                  <input 
-                    type="text" placeholder="+91 9876543210" 
-                    value={newUser.phoneNumber} onChange={(e) => setNewUser({...newUser, phoneNumber: e.target.value})}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div style={{ marginBottom: '20px' }}>
-                <label className="form-label">
-                  {modalType === 'edit_pool' ? 'New Total Coin Pool (Coins) *' : `Amount to ${modalType} *`}
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Coins size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#d97706' }} />
-                  <input 
-                    type="number" 
-                    style={{ paddingLeft: '44px', fontSize: '18px', fontWeight: '700' }}
-                    value={coinAmount}
-                    onChange={(e) => setCoinAmount(e.target.value)}
-                    onFocus={(e) => e.target.select()}
-                    placeholder="e.g. 1000000"
-                    min={modalType === 'edit_pool' ? String(adminStats?.distributedCoins || 0) : "0"}
-                    autoFocus
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', flexShrink: 0 }}>
               <button className="btn btn-outline" style={{ flex: 1, padding: '12px' }} onClick={closeModal}>Cancel</button>
               <button 
                 className="btn btn-primary" 
@@ -518,7 +522,8 @@ const UsersPage: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
