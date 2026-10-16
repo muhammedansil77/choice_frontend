@@ -8,8 +8,7 @@ import {
   Edit2,
   Calendar,
   Layers,
-  Upload,
-  Image as ImageIcon
+  Upload
 } from 'lucide-react';
 import api from '../services/api';
 import type { Category } from '../types/index';
