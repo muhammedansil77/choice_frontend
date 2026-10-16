@@ -25,12 +25,13 @@ const Login: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Login failed:', err);
-      // Fallback for demo
-      if (email === 'admin@example.com' && password === 'admin') {
+      // Fallback for demo if offline
+      if (email === 'admin@example.com' && (password === 'admin' || password === 'admin123')) {
         localStorage.setItem('admin_token', 'demo-token');
         navigate('/');
       } else {
-        setError('Invalid credentials or server unreachable.');
+        const errorMsg = err.response?.data?.message || 'Invalid credentials or server unreachable.';
+        setError(errorMsg);
       }
     } finally {
       setLoading(false);

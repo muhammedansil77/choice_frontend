@@ -22,6 +22,8 @@ export interface Product {
 export interface Category {
   _id: string;
   name: string;
+  icon?: string;
+  image?: string;
   description?: string;
   createdAt: string;
 }
