@@ -295,7 +295,10 @@ const CreditLedgerContent: React.FC = () => {
   // Auto-fetch existing invoice when invoice number is typed, selected, or checked
   const checkAndAutoFetchInvoice = async (invoiceNum: string) => {
     const clean = invoiceNum.trim();
-    if (!clean) {
+    const invoiceIdentifier = clean.replace(/^INV-?/i, '').trim();
+
+    // If user has only typed prefix "INV" or "INV-" without an actual invoice number, ignore
+    if (!invoiceIdentifier || invoiceIdentifier.length < 1) {
       setDuplicateInvoice(null);
       if (!editingEntry) {
         setDetectedExistingEntry(null);
@@ -303,8 +306,6 @@ const CreditLedgerContent: React.FC = () => {
       }
       return;
     }
-
-    const cleanNorm = clean.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
     const handleFoundBill = (bill: CreditEntry) => {
       if (modalMode === 'create') {
@@ -322,12 +323,16 @@ const CreditLedgerContent: React.FC = () => {
     // 1. Check in loaded entries list (instant memory match)
     const inMem = entries.find((e) => {
       if (editingEntry && e.id === editingEntry.id) return false;
-      const eNorm = e.invoiceNumber.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      const eClean = e.invoiceNumber.trim().toLowerCase();
+      const eIdentifier = eClean.replace(/^inv-?/i, '').trim();
+      const targetClean = clean.toLowerCase();
+      const targetIdentifier = invoiceIdentifier.toLowerCase();
+
       return (
-        eNorm === cleanNorm ||
-        eNorm === 'inv' + cleanNorm ||
-        cleanNorm === 'inv' + eNorm ||
-        e.invoiceNumber.trim().toLowerCase() === clean.toLowerCase()
+        eClean === targetClean ||
+        eIdentifier === targetIdentifier ||
+        eClean === `inv-${targetIdentifier}` ||
+        `inv-${eIdentifier}` === targetClean
       );
     });
 
@@ -371,7 +376,8 @@ const CreditLedgerContent: React.FC = () => {
   const handleInvoiceNumberChange = (value: string) => {
     setFormInvoiceNumber(value);
     const clean = value.trim();
-    if (clean.length >= 2) {
+    const invoiceIdentifier = clean.replace(/^INV-?/i, '').trim();
+    if (invoiceIdentifier.length >= 1) {
       checkAndAutoFetchInvoice(value);
     } else {
       setDuplicateInvoice(null);
@@ -1130,6 +1136,10 @@ const CreditLedgerContent: React.FC = () => {
                       type="button"
                       onClick={() => {
                         setModalMode('collect');
+                        setFormInvoiceNumber('');
+                        setDuplicateInvoice(null);
+                        setDetectedExistingEntry(null);
+                        setLookupMessage(null);
                       }}
                       style={{
                         padding: '9px 12px',
@@ -1152,8 +1162,8 @@ const CreditLedgerContent: React.FC = () => {
                   </div>
                 )}
 
-                {/* Quick Select Existing Unpaid Bill dropdown */}
-                {!editingEntry && (modalMode === 'collect' || unpaidInvoices.length > 0) && (
+                {/* Quick Select Existing Unpaid Bill dropdown: ONLY SHOW IN COLLECT PAYMENT MODE */}
+                {!editingEntry && modalMode === 'collect' && (
                   <div style={{
                     padding: '12px 14px',
                     borderRadius: '12px',
