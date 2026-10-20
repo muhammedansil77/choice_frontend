@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Component, type ErrorInfo, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ReceiptText,
@@ -19,12 +19,50 @@ import {
   Calendar,
   FileText,
   ArrowDownRight,
-  Building2
+  Building2,
+  RefreshCw
 } from 'lucide-react';
 import api from '../services/api';
 import type { CreditEntry, CreditSummary, User } from '../types/index';
 
-const CreditLedger: React.FC = () => {
+// Error Boundary to prevent any blank screen
+class CreditLedgerErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: string }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message || 'An unexpected error occurred' };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('CreditLedger ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text)' }}>
+          <div className="glass-card" style={{ maxWidth: '500px', margin: '40px auto', padding: '32px', borderRadius: '16px' }}>
+            <AlertTriangle size={48} style={{ color: '#ef4444', marginBottom: '16px' }} />
+            <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>Unable to display Credit Ledger</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>{this.state.error}</p>
+            <button
+              onClick={() => { this.setState({ hasError: false, error: '' }); window.location.reload(); }}
+              className="btn btn-primary"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const CreditLedgerContent: React.FC = () => {
   const [entries, setEntries] = useState<CreditEntry[]>([]);
   const [summary, setSummary] = useState<CreditSummary>({
     totalBilled: 0,
@@ -65,9 +103,10 @@ const CreditLedger: React.FC = () => {
   const fetchUsers = async () => {
     try {
       const res = await api.get('/users');
-      setUsers(res.data || []);
+      setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Error fetching users:', err);
+      setUsers([]);
     }
   };
 
@@ -75,22 +114,31 @@ const CreditLedger: React.FC = () => {
     setLoading(true);
     try {
       const params: any = {};
-      if (selectedUserFilter !== 'all') params.userId = selectedUserFilter;
-      if (categoryFilter !== 'all') params.category = categoryFilter;
-      if (statusFilter !== 'all') params.status = statusFilter;
+      if (selectedUserFilter && selectedUserFilter !== 'all') params.userId = selectedUserFilter;
+      if (categoryFilter && categoryFilter !== 'all') params.category = categoryFilter;
+      if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
       if (searchTerm.trim()) params.search = searchTerm.trim();
 
       const res = await api.get('/credit', { params });
-      setEntries(res.data.entries || []);
-      setSummary(res.data.summary || {
-        totalBilled: 0,
-        totalReceived: 0,
-        totalReturned: 0,
-        totalOutstanding: 0,
-        totalCount: 0,
-      });
+      const data = res.data;
+
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        setEntries(Array.isArray(data.entries) ? data.entries : []);
+        setSummary({
+          totalBilled: Number(data.summary?.totalBilled) || 0,
+          totalReceived: Number(data.summary?.totalReceived) || 0,
+          totalReturned: Number(data.summary?.totalReturned) || 0,
+          totalOutstanding: Number(data.summary?.totalOutstanding) || 0,
+          totalCount: Number(data.summary?.totalCount) || 0,
+        });
+      } else if (Array.isArray(data)) {
+        setEntries(data);
+      } else {
+        setEntries([]);
+      }
     } catch (err) {
       console.error('Error fetching credit entries:', err);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
@@ -103,7 +151,8 @@ const CreditLedger: React.FC = () => {
 
   const openNewModal = () => {
     setEditingEntry(null);
-    setFormUserId(users.length > 0 ? (users[0].id || users[0]._id || '') : '');
+    const safeUsers = Array.isArray(users) ? users : [];
+    setFormUserId(safeUsers.length > 0 ? (safeUsers[0].id || safeUsers[0]._id || '') : '');
     setFormInvoiceNumber(`INV-${Date.now().toString().slice(-6)}`);
     setFormDate(new Date().toISOString().split('T')[0]);
     setFormCategory('electronic');
@@ -118,11 +167,15 @@ const CreditLedger: React.FC = () => {
     setEditingEntry(entry);
     setFormUserId(entry.userId);
     setFormInvoiceNumber(entry.invoiceNumber);
-    setFormDate(new Date(entry.date).toISOString().split('T')[0]);
-    setFormCategory(entry.category);
-    setFormBillAmount(entry.billAmount || '');
-    setFormReceivedAmount(entry.receivedAmount || '');
-    setFormReturnAmount(entry.returnAmount || '');
+    try {
+      setFormDate(new Date(entry.date).toISOString().split('T')[0]);
+    } catch {
+      setFormDate(new Date().toISOString().split('T')[0]);
+    }
+    setFormCategory(entry.category || 'electronic');
+    setFormBillAmount(entry.billAmount ?? '');
+    setFormReceivedAmount(entry.receivedAmount ?? '');
+    setFormReturnAmount(entry.returnAmount ?? '');
     setFormNarration(entry.narration || '');
     setIsModalOpen(true);
   };
@@ -130,6 +183,27 @@ const CreditLedger: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingEntry(null);
+  };
+
+  // Safe formatting helpers
+  const formatCurrency = (val: any) => {
+    const num = Number(val) || 0;
+    return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const formatDate = (val: any) => {
+    if (!val) return '—';
+    try {
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return String(val);
+      return d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return String(val);
+    }
   };
 
   // Form Computed Balance & Status Preview
@@ -261,6 +335,9 @@ const CreditLedger: React.FC = () => {
     }
   };
 
+  const safeUsers = Array.isArray(users) ? users : [];
+  const safeEntries = Array.isArray(entries) ? entries : [];
+
   return (
     <div className="credit-ledger-page" style={{ paddingBottom: '48px' }}>
       {/* Header */}
@@ -275,21 +352,31 @@ const CreditLedger: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={openNewModal}
-          className="btn btn-primary"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '12px 20px',
-            borderRadius: '12px',
-            fontWeight: '600',
-            boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
-          }}
-        >
-          <Plus size={18} /> Record Credit / Bill
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => fetchLedger()}
+            className="btn btn-outline"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '12px', padding: '12px 16px' }}
+            title="Refresh Ledger"
+          >
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button
+            onClick={openNewModal}
+            className="btn btn-primary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 20px',
+              borderRadius: '12px',
+              fontWeight: '600',
+              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+            }}
+          >
+            <Plus size={18} /> Record Credit / Bill
+          </button>
+        </div>
       </div>
 
       {/* Metric Summary Cards */}
@@ -326,7 +413,7 @@ const CreditLedger: React.FC = () => {
               Total Outstanding Due
             </p>
             <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#ef4444', margin: '4px 0 0' }}>
-              ₹{summary.totalOutstanding.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              {formatCurrency(summary.totalOutstanding)}
             </h3>
           </div>
         </div>
@@ -357,7 +444,7 @@ const CreditLedger: React.FC = () => {
               Total Billed Sales
             </p>
             <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#3b82f6', margin: '4px 0 0' }}>
-              ₹{summary.totalBilled.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              {formatCurrency(summary.totalBilled)}
             </h3>
           </div>
         </div>
@@ -388,7 +475,7 @@ const CreditLedger: React.FC = () => {
               Total Received / Paid
             </p>
             <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#10b981', margin: '4px 0 0' }}>
-              ₹{summary.totalReceived.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              {formatCurrency(summary.totalReceived)}
             </h3>
           </div>
         </div>
@@ -419,7 +506,7 @@ const CreditLedger: React.FC = () => {
               Total Goods Returned
             </p>
             <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#a855f7', margin: '4px 0 0' }}>
-              ₹{summary.totalReturned.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              {formatCurrency(summary.totalReturned)}
             </h3>
           </div>
         </div>
@@ -467,7 +554,7 @@ const CreditLedger: React.FC = () => {
               }}
             >
               <option value="all">All Customers</option>
-              {users.map((u) => {
+              {safeUsers.map((u) => {
                 const uid = u.id || u._id || '';
                 return (
                   <option key={uid} value={uid}>
@@ -569,7 +656,7 @@ const CreditLedger: React.FC = () => {
                     <p style={{ marginTop: '12px', fontSize: '14px' }}>Loading credit ledger entries...</p>
                   </td>
                 </tr>
-              ) : entries.length === 0 ? (
+              ) : safeEntries.length === 0 ? (
                 <tr>
                   <td colSpan={11} style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
                     <ReceiptText size={44} style={{ opacity: 0.3, marginBottom: '10px' }} />
@@ -578,12 +665,8 @@ const CreditLedger: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                entries.map((entry) => {
-                  const entryDate = new Date(entry.date).toLocaleDateString('en-IN', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  });
+                safeEntries.map((entry) => {
+                  const entryDate = formatDate(entry.date);
 
                   return (
                     <tr
@@ -654,22 +737,22 @@ const CreditLedger: React.FC = () => {
 
                       {/* Bill Amount */}
                       <td style={{ padding: '14px 18px', fontSize: '13px', fontWeight: '600', textAlign: 'right', color: 'var(--text)' }}>
-                        ₹{entry.billAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        {formatCurrency(entry.billAmount)}
                       </td>
 
                       {/* Received Amount */}
                       <td style={{ padding: '14px 18px', fontSize: '13px', fontWeight: '600', textAlign: 'right', color: '#10b981' }}>
-                        ₹{entry.receivedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        {formatCurrency(entry.receivedAmount)}
                       </td>
 
                       {/* Return Amount */}
                       <td style={{ padding: '14px 18px', fontSize: '13px', fontWeight: '600', textAlign: 'right', color: '#a855f7' }}>
-                        ₹{entry.returnAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        {formatCurrency(entry.returnAmount)}
                       </td>
 
                       {/* Balance Amount */}
-                      <td style={{ padding: '14px 18px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: entry.balanceAmount > 0 ? '#ef4444' : '#10b981' }}>
-                        ₹{entry.balanceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      <td style={{ padding: '14px 18px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: (entry.balanceAmount || 0) > 0 ? '#ef4444' : '#10b981' }}>
+                        {formatCurrency(entry.balanceAmount)}
                       </td>
 
                       {/* Status */}
@@ -773,7 +856,7 @@ const CreditLedger: React.FC = () => {
                     }}
                   >
                     <option value="">-- Choose Customer --</option>
-                    {users.map((u) => {
+                    {safeUsers.map((u) => {
                       const uid = u.id || u._id || '';
                       return (
                         <option key={uid} value={uid}>
@@ -919,7 +1002,7 @@ const CreditLedger: React.FC = () => {
                       Calculated Balance Due
                     </span>
                     <div style={{ fontSize: '20px', fontWeight: '800', color: calculatedBalance > 0 ? '#ef4444' : '#10b981', marginTop: '2px' }}>
-                      ₹{calculatedBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      {formatCurrency(calculatedBalance)}
                     </div>
                   </div>
 
@@ -979,6 +1062,14 @@ const CreditLedger: React.FC = () => {
         document.body
       )}
     </div>
+  );
+};
+
+const CreditLedger: React.FC = () => {
+  return (
+    <CreditLedgerErrorBoundary>
+      <CreditLedgerContent />
+    </CreditLedgerErrorBoundary>
   );
 };
 
