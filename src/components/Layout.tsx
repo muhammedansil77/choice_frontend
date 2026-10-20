@@ -24,9 +24,22 @@ const Layout: React.FC = () => {
         <h2 className="title-gradient" style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>Choice Electricals</h2>
         <button 
           onClick={toggleSidebar}
-          style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          aria-label="Toggle navigation menu"
+          style={{ 
+            background: 'rgba(37, 99, 235, 0.08)', 
+            border: '1px solid rgba(37, 99, 235, 0.25)', 
+            color: 'var(--primary, #2563eb)', 
+            cursor: 'pointer', 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
+            transition: 'all 0.2s ease',
+          }}
         >
-          {isSidebarOpen ? <X size={28} /> : <Menu size={28} />}
+          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 

@@ -557,7 +557,7 @@ const CreditLedgerContent: React.FC = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div className="ledger-actions-bar" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={() => fetchLedger()}
             className="btn btn-outline"
@@ -1070,7 +1070,7 @@ const CreditLedgerContent: React.FC = () => {
       {/* Record / Edit / Collect Payment Modal */}
       {isModalOpen && createPortal(
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-          <div className="modal-card animate-fade-in" style={{ width: '580px', maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-card animate-fade-in credit-modal-card" style={{ width: '580px', maxWidth: '100%', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
               <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ReceiptText size={20} style={{ color: 'var(--primary)' }} />
@@ -1092,7 +1092,7 @@ const CreditLedgerContent: React.FC = () => {
                 
                 {/* 1. Mode Switcher (New Bill vs Receive Payment) */}
                 {!editingEntry && (
-                  <div style={{
+                  <div className="modal-mode-tabs" style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: '8px',
@@ -1233,7 +1233,7 @@ const CreditLedgerContent: React.FC = () => {
                         Current Due: {formatCurrency(detectedExistingEntry.balanceAmount)}
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', paddingTop: '4px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', paddingTop: '4px' }}>
                       <div>Customer: <strong style={{ color: 'var(--text)' }}>{detectedExistingEntry.user?.name || 'Customer'}</strong></div>
                       <div>Original Bill: <strong style={{ color: 'var(--text)' }}>{formatCurrency(detectedExistingEntry.billAmount)}</strong></div>
                       <div>Already Paid: <strong style={{ color: '#10b981' }}>{formatCurrency(detectedExistingEntry.receivedAmount)}</strong></div>
@@ -1305,7 +1305,7 @@ const CreditLedgerContent: React.FC = () => {
                 </div>
 
                 {/* Invoice Number & Date in Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+                <div className="modal-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
                   <div>
                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1461,7 +1461,7 @@ const CreditLedgerContent: React.FC = () => {
                   <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Building2 size={14} /> Department / Category *
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div className="modal-department-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <button
                       type="button"
                       onClick={() => setFormCategory('electronic')}
@@ -1549,7 +1549,7 @@ const CreditLedgerContent: React.FC = () => {
                       </span>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="modal-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
                         <label className="form-label" style={{ color: '#10b981', fontWeight: '700', fontSize: '12px' }}>
                           RECEIVED / PAID NOW (₹) *
@@ -1608,7 +1608,7 @@ const CreditLedgerContent: React.FC = () => {
                   </div>
                 ) : (
                   /* Standard Fresh Invoice Amount Inputs */
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="modal-responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
                       <label className="form-label" style={{ fontWeight: '600' }}>RECEIVED / PAID NOW (₹)</label>
                       <input
@@ -1636,7 +1636,7 @@ const CreditLedgerContent: React.FC = () => {
                 )}
 
                 {/* Auto Calculated Live Preview Card */}
-                <div style={{
+                <div className="modal-balance-card" style={{
                   padding: '14px 18px',
                   borderRadius: '12px',
                   background: 'rgba(255, 255, 255, 0.03)',
