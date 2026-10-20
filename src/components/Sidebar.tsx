@@ -8,6 +8,7 @@ import {
   Tags, 
   ShoppingCart, 
   IndianRupee,
+  ReceiptText,
   LogOut,
   ChevronRight,
   PanelLeftClose,
@@ -27,6 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar, isCollapsed, to
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
     { name: 'Users', path: '/users', icon: <Users size={20} /> },
+    { name: 'Credit Ledger', path: '/credit', icon: <ReceiptText size={20} /> },
     { name: 'Products', path: '/products', icon: <Package size={20} /> },
     { name: 'Categories', path: '/categories', icon: <Tags size={20} /> },
     { name: 'Orders', path: '/orders', icon: <ShoppingCart size={20} /> },

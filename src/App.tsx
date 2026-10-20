@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Categories from './pages/Categories';
 import Orders from './pages/Orders';
 import Withdrawals from './pages/Withdrawals';
+import CreditLedger from './pages/CreditLedger';
 
 // Simple Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -27,6 +28,7 @@ function App() {
         }>
           <Route index element={<Dashboard />} />
           <Route path="users" element={<Users />} />
+          <Route path="credit" element={<CreditLedger />} />
           <Route path="products" element={<Products />} />
           <Route path="categories" element={<Categories />} />
           <Route path="orders" element={<Orders />} />

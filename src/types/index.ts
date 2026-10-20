@@ -1,7 +1,9 @@
 export interface User {
-  _id: string;
+  id?: string;
+  _id?: string;
   name: string;
   email: string;
+  phoneNumber?: string;
   role: 'admin' | 'user';
   coinBalance: number;
   createdAt: string;
@@ -42,3 +44,35 @@ export interface Order {
   status: 'pending' | 'completed' | 'cancelled';
   createdAt: string;
 }
+
+export interface CreditEntry {
+  id: string;
+  userId: string;
+  user?: {
+    id: string;
+    name: string;
+    phoneNumber?: string;
+    email?: string;
+  };
+  invoiceNumber: string;
+  date: string;
+  category: 'electronic' | 'hardware';
+  billAmount: number;
+  receivedAmount: number;
+  returnAmount: number;
+  balanceAmount: number;
+  narration?: string | null;
+  status: 'unpaid' | 'partial' | 'settled';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreditSummary {
+  totalBilled: number;
+  totalReceived: number;
+  totalReturned: number;
+  totalOutstanding: number;
+  totalCount?: number;
+  totalInvoices?: number;
+}
+
