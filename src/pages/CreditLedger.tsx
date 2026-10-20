@@ -86,6 +86,7 @@ const CreditLedgerContent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<CreditEntry | null>(null);
   const [detectedExistingEntry, setDetectedExistingEntry] = useState<CreditEntry | null>(null);
+  const [duplicateInvoice, setDuplicateInvoice] = useState<CreditEntry | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'collect'>('create');
 
@@ -162,6 +163,7 @@ const CreditLedgerContent: React.FC = () => {
   const openNewModal = () => {
     setEditingEntry(null);
     setDetectedExistingEntry(null);
+    setDuplicateInvoice(null);
     setModalMode('create');
     const safeUsers = Array.isArray(users) ? users : [];
     setFormUserId(safeUsers.length > 0 ? (safeUsers[0].id || safeUsers[0]._id || '') : '');
@@ -180,6 +182,7 @@ const CreditLedgerContent: React.FC = () => {
   const openEditModal = (entry: CreditEntry) => {
     setEditingEntry(entry);
     setDetectedExistingEntry(entry);
+    setDuplicateInvoice(null);
     setModalMode('edit');
     setFormUserId(entry.userId);
     setFormInvoiceNumber(entry.invoiceNumber);
@@ -201,6 +204,7 @@ const CreditLedgerContent: React.FC = () => {
   const openPaymentCollectionModal = (entry: CreditEntry) => {
     setEditingEntry(entry);
     setDetectedExistingEntry(entry);
+    setDuplicateInvoice(null);
     setModalMode('collect');
     setFormUserId(entry.userId);
     setFormInvoiceNumber(entry.invoiceNumber);
@@ -223,6 +227,7 @@ const CreditLedgerContent: React.FC = () => {
     setIsModalOpen(false);
     setEditingEntry(null);
     setDetectedExistingEntry(null);
+    setDuplicateInvoice(null);
     setAddPaymentAmount('');
     setAddReturnAmount('');
   };
@@ -254,6 +259,7 @@ const CreditLedgerContent: React.FC = () => {
   const openGeneralPaymentModal = () => {
     setEditingEntry(null);
     setDetectedExistingEntry(null);
+    setDuplicateInvoice(null);
     setModalMode('collect');
     setLookupMessage(null);
     setFormUserId('');
@@ -290,6 +296,7 @@ const CreditLedgerContent: React.FC = () => {
   const checkAndAutoFetchInvoice = async (invoiceNum: string) => {
     const clean = invoiceNum.trim();
     if (!clean) {
+      setDuplicateInvoice(null);
       if (!editingEntry) {
         setDetectedExistingEntry(null);
         setLookupMessage(null);
@@ -299,8 +306,22 @@ const CreditLedgerContent: React.FC = () => {
 
     const cleanNorm = clean.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
+    const handleFoundBill = (bill: CreditEntry) => {
+      if (modalMode === 'create') {
+        // Validation: Invoice already exists! Cannot create duplicate bill or add money
+        setDuplicateInvoice(bill);
+        setDetectedExistingEntry(null);
+        setLookupMessage(`Invoice #${bill.invoiceNumber} already exists for ${bill.user?.name || 'Customer'}. Cannot create duplicate bill.`);
+      } else {
+        // Collect / Edit mode: auto-fetch bill to collect payment
+        setDuplicateInvoice(null);
+        applyBillToForm(bill);
+      }
+    };
+
     // 1. Check in loaded entries list (instant memory match)
     const inMem = entries.find((e) => {
+      if (editingEntry && e.id === editingEntry.id) return false;
       const eNorm = e.invoiceNumber.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
       return (
         eNorm === cleanNorm ||
@@ -311,7 +332,7 @@ const CreditLedgerContent: React.FC = () => {
     });
 
     if (inMem) {
-      applyBillToForm(inMem);
+      handleFoundBill(inMem);
       return;
     }
 
@@ -319,17 +340,17 @@ const CreditLedgerContent: React.FC = () => {
     try {
       setInvoiceLookupLoading(true);
       const res = await api.get(`/credit/invoice/${encodeURIComponent(clean)}`);
-      if (res.data && res.data.id) {
-        applyBillToForm(res.data);
+      if (res.data && res.data.id && (!editingEntry || res.data.id !== editingEntry.id)) {
+        handleFoundBill(res.data);
         return;
       }
     } catch {
-      // If user typed 101 without INV-, try with INV-
+      // If user typed without INV-, try with INV-
       if (!clean.toUpperCase().startsWith('INV-')) {
         try {
           const res2 = await api.get(`/credit/invoice/${encodeURIComponent('INV-' + clean)}`);
-          if (res2.data && res2.data.id) {
-            applyBillToForm(res2.data);
+          if (res2.data && res2.data.id && (!editingEntry || res2.data.id !== editingEntry.id)) {
+            handleFoundBill(res2.data);
             return;
           }
         } catch {
@@ -337,6 +358,7 @@ const CreditLedgerContent: React.FC = () => {
         }
       }
 
+      setDuplicateInvoice(null);
       if (!editingEntry) {
         setDetectedExistingEntry(null);
         setLookupMessage(null);
@@ -351,9 +373,12 @@ const CreditLedgerContent: React.FC = () => {
     const clean = value.trim();
     if (clean.length >= 2) {
       checkAndAutoFetchInvoice(value);
-    } else if (!clean && !editingEntry) {
-      setDetectedExistingEntry(null);
-      setLookupMessage(null);
+    } else {
+      setDuplicateInvoice(null);
+      if (!editingEntry) {
+        setDetectedExistingEntry(null);
+        setLookupMessage(null);
+      }
     }
   };
 
@@ -395,6 +420,11 @@ const CreditLedgerContent: React.FC = () => {
       return;
     }
 
+    if (modalMode === 'create' && duplicateInvoice) {
+      alert(`Invoice #${duplicateInvoice.invoiceNumber} already exists for ${duplicateInvoice.user?.name || 'Customer'}! You cannot add money or create a duplicate bill with an existing invoice number.`);
+      return;
+    }
+
     setActionLoading(true);
     try {
       const payload = {
@@ -408,7 +438,7 @@ const CreditLedgerContent: React.FC = () => {
         narration: formNarration.trim(),
       };
 
-      const targetId = editingEntry?.id || detectedExistingEntry?.id;
+      const targetId = editingEntry?.id || (modalMode === 'collect' ? detectedExistingEntry?.id : undefined);
 
       if (targetId) {
         // Update existing invoice (reduces due money with new payment)
@@ -1271,7 +1301,9 @@ const CreditLedgerContent: React.FC = () => {
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <FileText size={14} /> Invoice / Bill # *
                       </span>
-                      {detectedExistingEntry ? (
+                      {modalMode === 'create' && duplicateInvoice ? (
+                        <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: '800' }}>⚠️ Already Exists!</span>
+                      ) : detectedExistingEntry ? (
                         <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '800' }}>Auto-Fetched ✓</span>
                       ) : invoiceLookupLoading ? (
                         <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '600' }}>Searching...</span>
@@ -1285,17 +1317,21 @@ const CreditLedgerContent: React.FC = () => {
                         onChange={(e) => handleInvoiceNumberChange(e.target.value)}
                         onBlur={() => checkAndAutoFetchInvoice(formInvoiceNumber)}
                         required
-                        style={{ flex: 1 }}
+                        style={{
+                          flex: 1,
+                          borderColor: (modalMode === 'create' && duplicateInvoice) ? '#ef4444' : undefined,
+                          background: (modalMode === 'create' && duplicateInvoice) ? 'rgba(239, 68, 68, 0.08)' : undefined,
+                        }}
                       />
                       <button
                         type="button"
                         onClick={() => checkAndAutoFetchInvoice(formInvoiceNumber)}
-                        title="Check if bill exists and auto-fetch details"
+                        title="Check if bill exists"
                         style={{
                           padding: '0 10px',
-                          background: 'rgba(37, 99, 235, 0.1)',
-                          border: '1px solid rgba(37, 99, 235, 0.25)',
-                          color: 'var(--primary)',
+                          background: (modalMode === 'create' && duplicateInvoice) ? 'rgba(239, 68, 68, 0.15)' : 'rgba(37, 99, 235, 0.1)',
+                          border: (modalMode === 'create' && duplicateInvoice) ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(37, 99, 235, 0.25)',
+                          color: (modalMode === 'create' && duplicateInvoice) ? '#ef4444' : 'var(--primary)',
                           borderRadius: '8px',
                           fontSize: '11px',
                           fontWeight: '700',
@@ -1303,10 +1339,94 @@ const CreditLedgerContent: React.FC = () => {
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {invoiceLookupLoading ? '...' : 'Auto-Fetch'}
+                        {invoiceLookupLoading ? '...' : 'Check'}
                       </button>
                     </div>
-                    {lookupMessage && (
+
+                    {/* Red Validation Alert Box for Existing Invoice in Create Mode */}
+                    {modalMode === 'create' && duplicateInvoice && (
+                      <div style={{
+                        marginTop: '8px',
+                        padding: '12px 14px',
+                        borderRadius: '10px',
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        border: '1.5px solid #ef4444',
+                        color: '#ef4444',
+                        fontSize: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                            <AlertTriangle size={16} /> Invoice #{duplicateInvoice.invoiceNumber} Already Exists!
+                          </span>
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: '800',
+                            background: '#ef4444',
+                            color: '#fff',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase'
+                          }}>
+                            Cannot Add Money
+                          </span>
+                        </div>
+                        <div style={{ color: 'var(--text)' }}>
+                          This invoice already exists for <strong>{duplicateInvoice.user?.name || 'Customer'}</strong> (Bill: {formatCurrency(duplicateInvoice.billAmount)} | Due: {formatCurrency(duplicateInvoice.balanceAmount)}).
+                          <br />
+                          <span style={{ color: '#ef4444', fontWeight: '700' }}>
+                            You cannot create a duplicate bill or add money with this invoice number.
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => openPaymentCollectionModal(duplicateInvoice)}
+                            style={{
+                              background: '#10b981',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '5px 12px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <IndianRupee size={12} /> Collect Payment on this Bill Instead
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormInvoiceNumber(generateFreshInvoiceNumber());
+                              setDuplicateInvoice(null);
+                            }}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              color: 'var(--text)',
+                              border: '1px solid var(--border)',
+                              padding: '5px 12px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Sparkles size={12} /> Generate Unique Invoice #
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {lookupMessage && !duplicateInvoice && (
                       <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', marginTop: '4px' }}>
                         {lookupMessage}
                       </div>
@@ -1577,17 +1697,24 @@ const CreditLedgerContent: React.FC = () => {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={actionLoading}
+                  disabled={actionLoading || (modalMode === 'create' && !!duplicateInvoice)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    background: (detectedExistingEntry && Number(addPaymentAmount) > 0)
+                    background: (modalMode === 'create' && !!duplicateInvoice)
+                      ? 'rgba(239, 68, 68, 0.2)'
+                      : (detectedExistingEntry && Number(addPaymentAmount) > 0)
                       ? 'linear-gradient(135deg, #10b981, #059669)'
                       : undefined,
-                    borderColor: (detectedExistingEntry && Number(addPaymentAmount) > 0)
+                    borderColor: (modalMode === 'create' && !!duplicateInvoice)
+                      ? '#ef4444'
+                      : (detectedExistingEntry && Number(addPaymentAmount) > 0)
                       ? '#10b981'
                       : undefined,
+                    color: (modalMode === 'create' && !!duplicateInvoice) ? '#ef4444' : undefined,
+                    cursor: (modalMode === 'create' && !!duplicateInvoice) ? 'not-allowed' : 'pointer',
+                    opacity: (modalMode === 'create' && !!duplicateInvoice) ? 0.65 : 1,
                     fontWeight: '700',
                     fontSize: '14px',
                     padding: '10px 20px',
@@ -1595,6 +1722,8 @@ const CreditLedgerContent: React.FC = () => {
                 >
                   {actionLoading
                     ? 'Saving...'
+                    : (modalMode === 'create' && !!duplicateInvoice)
+                    ? 'Cannot Save (Invoice Exists)'
                     : detectedExistingEntry
                     ? Number(addPaymentAmount) > 0
                       ? `Collect ${formatCurrency(addPaymentAmount)} & Reduce Due to ${formatCurrency(calculatedBalance)}`
