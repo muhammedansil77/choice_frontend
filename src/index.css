@@ -690,3 +690,24 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, selec
     justify-content: center !important;
   }
 }
+
+.modal-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.modal-scroll-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.modal-scroll-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-scroll-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+}

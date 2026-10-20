@@ -1088,7 +1088,7 @@ const CreditLedgerContent: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveEntry} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '4px', paddingBottom: '8px' }}>
+              <div className="modal-scroll-body" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '6px', paddingBottom: '20px' }}>
                 
                 {/* 1. Mode Switcher (New Bill vs Receive Payment) */}
                 {!editingEntry && (
