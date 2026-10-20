@@ -20,7 +20,9 @@ import {
   FileText,
   ArrowDownRight,
   Building2,
-  RefreshCw
+  RefreshCw,
+  Sparkles,
+  TrendingDown
 } from 'lucide-react';
 import api from '../services/api';
 import type { CreditEntry, CreditSummary, User } from '../types/index';
@@ -83,7 +85,9 @@ const CreditLedgerContent: React.FC = () => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<CreditEntry | null>(null);
+  const [detectedExistingEntry, setDetectedExistingEntry] = useState<CreditEntry | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'collect'>('create');
 
   // Form State
   const [formUserId, setFormUserId] = useState('');
@@ -93,6 +97,8 @@ const CreditLedgerContent: React.FC = () => {
   const [formBillAmount, setFormBillAmount] = useState<number | string>('');
   const [formReceivedAmount, setFormReceivedAmount] = useState<number | string>('');
   const [formReturnAmount, setFormReturnAmount] = useState<number | string>('');
+  const [addPaymentAmount, setAddPaymentAmount] = useState<number | string>('');
+  const [addReturnAmount, setAddReturnAmount] = useState<number | string>('');
   const [formNarration, setFormNarration] = useState('');
 
   useEffect(() => {
@@ -149,22 +155,32 @@ const CreditLedgerContent: React.FC = () => {
     fetchLedger();
   };
 
+  const generateFreshInvoiceNumber = () => {
+    return `INV-${Date.now().toString().slice(-6)}`;
+  };
+
   const openNewModal = () => {
     setEditingEntry(null);
+    setDetectedExistingEntry(null);
+    setModalMode('create');
     const safeUsers = Array.isArray(users) ? users : [];
     setFormUserId(safeUsers.length > 0 ? (safeUsers[0].id || safeUsers[0]._id || '') : '');
-    setFormInvoiceNumber(`INV-${Date.now().toString().slice(-6)}`);
+    setFormInvoiceNumber(generateFreshInvoiceNumber());
     setFormDate(new Date().toISOString().split('T')[0]);
     setFormCategory('electronic');
     setFormBillAmount('');
     setFormReceivedAmount('');
     setFormReturnAmount('');
+    setAddPaymentAmount('');
+    setAddReturnAmount('');
     setFormNarration('');
     setIsModalOpen(true);
   };
 
   const openEditModal = (entry: CreditEntry) => {
     setEditingEntry(entry);
+    setDetectedExistingEntry(entry);
+    setModalMode('edit');
     setFormUserId(entry.userId);
     setFormInvoiceNumber(entry.invoiceNumber);
     try {
@@ -176,6 +192,29 @@ const CreditLedgerContent: React.FC = () => {
     setFormBillAmount(entry.billAmount ?? '');
     setFormReceivedAmount(entry.receivedAmount ?? '');
     setFormReturnAmount(entry.returnAmount ?? '');
+    setAddPaymentAmount('');
+    setAddReturnAmount('');
+    setFormNarration(entry.narration || '');
+    setIsModalOpen(true);
+  };
+
+  const openPaymentCollectionModal = (entry: CreditEntry) => {
+    setEditingEntry(entry);
+    setDetectedExistingEntry(entry);
+    setModalMode('collect');
+    setFormUserId(entry.userId);
+    setFormInvoiceNumber(entry.invoiceNumber);
+    try {
+      setFormDate(new Date(entry.date).toISOString().split('T')[0]);
+    } catch {
+      setFormDate(new Date().toISOString().split('T')[0]);
+    }
+    setFormCategory(entry.category || 'electronic');
+    setFormBillAmount(entry.billAmount ?? '');
+    setFormReceivedAmount(entry.receivedAmount ?? '');
+    setFormReturnAmount(entry.returnAmount ?? '');
+    setAddPaymentAmount('');
+    setAddReturnAmount('');
     setFormNarration(entry.narration || '');
     setIsModalOpen(true);
   };
@@ -183,6 +222,9 @@ const CreditLedgerContent: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingEntry(null);
+    setDetectedExistingEntry(null);
+    setAddPaymentAmount('');
+    setAddReturnAmount('');
   };
 
   // Safe formatting helpers
@@ -206,23 +248,141 @@ const CreditLedgerContent: React.FC = () => {
     }
   };
 
+  const [invoiceLookupLoading, setInvoiceLookupLoading] = useState(false);
+  const [lookupMessage, setLookupMessage] = useState<string | null>(null);
+
+  const openGeneralPaymentModal = () => {
+    setEditingEntry(null);
+    setDetectedExistingEntry(null);
+    setModalMode('collect');
+    setLookupMessage(null);
+    setFormUserId('');
+    setFormInvoiceNumber('');
+    setFormDate(new Date().toISOString().split('T')[0]);
+    setFormCategory('electronic');
+    setFormBillAmount('');
+    setFormReceivedAmount('');
+    setFormReturnAmount('');
+    setAddPaymentAmount('');
+    setAddReturnAmount('');
+    setFormNarration('');
+    setIsModalOpen(true);
+  };
+
+  const applyBillToForm = (bill: CreditEntry) => {
+    setDetectedExistingEntry(bill);
+    setFormUserId(bill.userId);
+    setFormInvoiceNumber(bill.invoiceNumber);
+    setFormCategory(bill.category || 'electronic');
+    setFormBillAmount(bill.billAmount ?? 0);
+    setFormReceivedAmount(bill.receivedAmount ?? 0);
+    setFormReturnAmount(bill.returnAmount ?? 0);
+    try {
+      setFormDate(new Date(bill.date).toISOString().split('T')[0]);
+    } catch {
+      // keep current date
+    }
+    setFormNarration(bill.narration || '');
+    setLookupMessage(`Bill #${bill.invoiceNumber} auto-fetched for ${bill.user?.name || 'Customer'}! Due: ₹${bill.balanceAmount}`);
+  };
+
+  // Auto-fetch existing invoice when invoice number is typed, selected, or checked
+  const checkAndAutoFetchInvoice = async (invoiceNum: string) => {
+    const clean = invoiceNum.trim();
+    if (!clean) {
+      if (!editingEntry) {
+        setDetectedExistingEntry(null);
+        setLookupMessage(null);
+      }
+      return;
+    }
+
+    const cleanNorm = clean.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+    // 1. Check in loaded entries list (instant memory match)
+    const inMem = entries.find((e) => {
+      const eNorm = e.invoiceNumber.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      return (
+        eNorm === cleanNorm ||
+        eNorm === 'inv' + cleanNorm ||
+        cleanNorm === 'inv' + eNorm ||
+        e.invoiceNumber.trim().toLowerCase() === clean.toLowerCase()
+      );
+    });
+
+    if (inMem) {
+      applyBillToForm(inMem);
+      return;
+    }
+
+    // 2. Fetch from Backend API: /api/credit/invoice/:invoiceNumber
+    try {
+      setInvoiceLookupLoading(true);
+      const res = await api.get(`/credit/invoice/${encodeURIComponent(clean)}`);
+      if (res.data && res.data.id) {
+        applyBillToForm(res.data);
+        return;
+      }
+    } catch {
+      // If user typed 101 without INV-, try with INV-
+      if (!clean.toUpperCase().startsWith('INV-')) {
+        try {
+          const res2 = await api.get(`/credit/invoice/${encodeURIComponent('INV-' + clean)}`);
+          if (res2.data && res2.data.id) {
+            applyBillToForm(res2.data);
+            return;
+          }
+        } catch {
+          // not found
+        }
+      }
+
+      if (!editingEntry) {
+        setDetectedExistingEntry(null);
+        setLookupMessage(null);
+      }
+    } finally {
+      setInvoiceLookupLoading(false);
+    }
+  };
+
+  const handleInvoiceNumberChange = (value: string) => {
+    setFormInvoiceNumber(value);
+    const clean = value.trim();
+    if (clean.length >= 2) {
+      checkAndAutoFetchInvoice(value);
+    } else if (!clean && !editingEntry) {
+      setDetectedExistingEntry(null);
+      setLookupMessage(null);
+    }
+  };
+
+  // Computed Effective Received & Return Amounts taking into account any added payment
+  const effectiveReceivedAmount = useMemo(() => {
+    const base = parseFloat(String(formReceivedAmount)) || 0;
+    const add = parseFloat(String(addPaymentAmount)) || 0;
+    return base + add;
+  }, [formReceivedAmount, addPaymentAmount]);
+
+  const effectiveReturnAmount = useMemo(() => {
+    const base = parseFloat(String(formReturnAmount)) || 0;
+    const add = parseFloat(String(addReturnAmount)) || 0;
+    return base + add;
+  }, [formReturnAmount, addReturnAmount]);
+
   // Form Computed Balance & Status Preview
   const calculatedBalance = useMemo(() => {
     const bill = parseFloat(String(formBillAmount)) || 0;
-    const received = parseFloat(String(formReceivedAmount)) || 0;
-    const ret = parseFloat(String(formReturnAmount)) || 0;
-    return Math.max(0, bill - received - ret);
-  }, [formBillAmount, formReceivedAmount, formReturnAmount]);
+    return Math.max(0, bill - effectiveReceivedAmount - effectiveReturnAmount);
+  }, [formBillAmount, effectiveReceivedAmount, effectiveReturnAmount]);
 
   const calculatedStatus = useMemo(() => {
     const bill = parseFloat(String(formBillAmount)) || 0;
-    const received = parseFloat(String(formReceivedAmount)) || 0;
-    const ret = parseFloat(String(formReturnAmount)) || 0;
     if (calculatedBalance <= 0 && bill > 0) return 'settled';
-    if (received > 0 || ret > 0) return 'partial';
-    if (bill === 0 && received === 0 && ret === 0) return 'settled';
+    if (effectiveReceivedAmount > 0 || effectiveReturnAmount > 0) return 'partial';
+    if (bill === 0 && effectiveReceivedAmount === 0 && effectiveReturnAmount === 0) return 'settled';
     return 'unpaid';
-  }, [formBillAmount, formReceivedAmount, formReturnAmount, calculatedBalance]);
+  }, [formBillAmount, effectiveReceivedAmount, effectiveReturnAmount, calculatedBalance]);
 
   const handleSaveEntry = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,14 +403,18 @@ const CreditLedgerContent: React.FC = () => {
         date: formDate,
         category: formCategory,
         billAmount: parseFloat(String(formBillAmount)) || 0,
-        receivedAmount: parseFloat(String(formReceivedAmount)) || 0,
-        returnAmount: parseFloat(String(formReturnAmount)) || 0,
+        receivedAmount: effectiveReceivedAmount,
+        returnAmount: effectiveReturnAmount,
         narration: formNarration.trim(),
       };
 
-      if (editingEntry) {
-        await api.put(`/credit/${editingEntry.id}`, payload);
+      const targetId = editingEntry?.id || detectedExistingEntry?.id;
+
+      if (targetId) {
+        // Update existing invoice (reduces due money with new payment)
+        await api.put(`/credit/${targetId}`, payload);
       } else {
+        // Create new invoice entry
         await api.post('/credit', payload);
       }
 
@@ -338,6 +502,11 @@ const CreditLedgerContent: React.FC = () => {
   const safeUsers = Array.isArray(users) ? users : [];
   const safeEntries = Array.isArray(entries) ? entries : [];
 
+  // Helper list of existing unpaid or partial invoices for fast dropdown lookup
+  const unpaidInvoices = useMemo(() => {
+    return safeEntries.filter((e) => e.status !== 'settled' && e.balanceAmount > 0);
+  }, [safeEntries]);
+
   return (
     <div className="credit-ledger-page" style={{ paddingBottom: '48px' }}>
       {/* Header */}
@@ -352,7 +521,7 @@ const CreditLedgerContent: React.FC = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={() => fetchLedger()}
             className="btn btn-outline"
@@ -360,6 +529,25 @@ const CreditLedgerContent: React.FC = () => {
             title="Refresh Ledger"
           >
             <RefreshCw size={16} /> Refresh
+          </button>
+          <button
+            onClick={openGeneralPaymentModal}
+            className="btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 18px',
+              borderRadius: '12px',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              color: '#ffffff',
+              border: 'none',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+              cursor: 'pointer',
+            }}
+          >
+            <IndianRupee size={18} /> Receive Payment
           </button>
           <button
             onClick={openNewModal}
@@ -767,7 +955,32 @@ const CreditLedgerContent: React.FC = () => {
 
                       {/* Actions */}
                       <td style={{ padding: '14px 18px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          {/* Quick Collect Payment button if balance due */}
+                          {(entry.balanceAmount || 0) > 0 && (
+                            <button
+                              onClick={() => openPaymentCollectionModal(entry)}
+                              title="Collect Payment for this Bill"
+                              style={{
+                                background: 'rgba(16, 185, 129, 0.15)',
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                color: '#10b981',
+                                padding: '4px 8px',
+                                height: '32px',
+                                borderRadius: '8px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                              }}
+                            >
+                              <IndianRupee size={12} /> Collect
+                            </button>
+                          )}
+
                           <button
                             onClick={() => openEditModal(entry)}
                             title="Edit Invoice"
@@ -818,14 +1031,20 @@ const CreditLedgerContent: React.FC = () => {
         </div>
       </div>
 
-      {/* Record / Edit Modal */}
+      {/* Record / Edit / Collect Payment Modal */}
       {isModalOpen && createPortal(
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-          <div className="modal-card animate-fade-in" style={{ width: '560px', maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-card animate-fade-in" style={{ width: '580px', maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
               <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ReceiptText size={20} style={{ color: 'var(--primary)' }} />
-                {editingEntry ? 'Edit Credit / Bill Entry' : 'Record Credit Purchase / Bill'}
+                {modalMode === 'collect'
+                  ? (detectedExistingEntry ? `Collect Payment on Bill #${detectedExistingEntry.invoiceNumber}` : 'Receive Payment on Bill')
+                  : editingEntry
+                  ? 'Edit Credit Purchase / Bill'
+                  : detectedExistingEntry
+                  ? `Existing Bill Found (#${detectedExistingEntry.invoiceNumber}) - Collect Payment`
+                  : 'Record Credit Purchase / Bill'}
               </h3>
               <button type="button" className="modal-close-btn" onClick={closeModal}>
                 <X size={20} />
@@ -835,6 +1054,153 @@ const CreditLedgerContent: React.FC = () => {
             <form onSubmit={handleSaveEntry} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '4px', paddingBottom: '8px' }}>
                 
+                {/* 1. Mode Switcher (New Bill vs Receive Payment) */}
+                {!editingEntry && (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '8px',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    padding: '4px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border)'
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalMode('create');
+                        setDetectedExistingEntry(null);
+                        setLookupMessage(null);
+                        setFormInvoiceNumber(generateFreshInvoiceNumber());
+                        setFormBillAmount('');
+                        setFormReceivedAmount('');
+                        setFormReturnAmount('');
+                        setAddPaymentAmount('');
+                        setAddReturnAmount('');
+                      }}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: modalMode === 'create' && !detectedExistingEntry ? 'var(--primary)' : 'transparent',
+                        color: modalMode === 'create' && !detectedExistingEntry ? '#fff' : 'var(--text-muted)',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <Plus size={15} /> + New Credit Bill
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalMode('collect');
+                      }}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: modalMode === 'collect' || detectedExistingEntry ? '#10b981' : 'transparent',
+                        color: modalMode === 'collect' || detectedExistingEntry ? '#fff' : 'var(--text-muted)',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <IndianRupee size={15} /> Receive Payment (Existing Bill)
+                    </button>
+                  </div>
+                )}
+
+                {/* Quick Select Existing Unpaid Bill dropdown */}
+                {!editingEntry && (modalMode === 'collect' || unpaidInvoices.length > 0) && (
+                  <div style={{
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: 'rgba(16, 185, 129, 0.06)',
+                    border: '1px dashed rgba(16, 185, 129, 0.3)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label style={{ fontSize: '12px', fontWeight: '700', color: '#10b981', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Sparkles size={14} /> Select Existing Bill to Receive Payment:
+                      </label>
+                      {detectedExistingEntry && (
+                        <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '700' }}>
+                          ✓ Bill Loaded
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={detectedExistingEntry?.invoiceNumber || ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleInvoiceNumberChange(e.target.value);
+                        } else {
+                          setDetectedExistingEntry(null);
+                          setLookupMessage(null);
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        padding: '0 10px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                        color: 'var(--text)',
+                        fontSize: '13px',
+                      }}
+                    >
+                      <option value="">-- Choose an existing bill to collect payment (e.g. INV-101) --</option>
+                      {unpaidInvoices.map((inv) => (
+                        <option key={inv.id} value={inv.invoiceNumber}>
+                          {inv.invoiceNumber} - {inv.user?.name || 'Customer'} (Bill: ₹{inv.billAmount} | Due: ₹{inv.balanceAmount})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Detected Existing Bill Alert Card */}
+                {detectedExistingEntry && (
+                  <div style={{
+                    padding: '14px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.04))',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <CheckCircle2 size={16} /> Auto-Fetched Bill: #{detectedExistingEntry.invoiceNumber}
+                      </span>
+                      <span style={{ fontSize: '12px', fontWeight: '700', color: '#ef4444' }}>
+                        Current Due: {formatCurrency(detectedExistingEntry.balanceAmount)}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', paddingTop: '4px' }}>
+                      <div>Customer: <strong style={{ color: 'var(--text)' }}>{detectedExistingEntry.user?.name || 'Customer'}</strong></div>
+                      <div>Original Bill: <strong style={{ color: 'var(--text)' }}>{formatCurrency(detectedExistingEntry.billAmount)}</strong></div>
+                      <div>Already Paid: <strong style={{ color: '#10b981' }}>{formatCurrency(detectedExistingEntry.receivedAmount)}</strong></div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Customer Selection */}
                 <div>
                   <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -865,21 +1231,86 @@ const CreditLedgerContent: React.FC = () => {
                       );
                     })}
                   </select>
+
+                  {/* Customer pending bills quick chips */}
+                  {formUserId && !detectedExistingEntry && unpaidInvoices.filter(inv => inv.userId === formUserId).length > 0 && (
+                    <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>
+                        Customer has pending bills:
+                      </span>
+                      {unpaidInvoices.filter(inv => inv.userId === formUserId).map(bill => (
+                        <button
+                          key={bill.id}
+                          type="button"
+                          onClick={() => applyBillToForm(bill)}
+                          style={{
+                            background: 'rgba(245, 158, 11, 0.15)',
+                            border: '1px solid rgba(245, 158, 11, 0.3)',
+                            color: '#f59e0b',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Clock size={11} /> #{bill.invoiceNumber} (Due: {formatCurrency(bill.balanceAmount)})
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Invoice Number & Date in Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
                   <div>
-                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <FileText size={14} /> Invoice / Bill # *
+                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <FileText size={14} /> Invoice / Bill # *
+                      </span>
+                      {detectedExistingEntry ? (
+                        <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '800' }}>Auto-Fetched ✓</span>
+                      ) : invoiceLookupLoading ? (
+                        <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '600' }}>Searching...</span>
+                      ) : null}
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. INV-10492"
-                      value={formInvoiceNumber}
-                      onChange={(e) => setFormInvoiceNumber(e.target.value)}
-                      required
-                    />
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <input
+                        type="text"
+                        placeholder="e.g. INV-101 or 101"
+                        value={formInvoiceNumber}
+                        onChange={(e) => handleInvoiceNumberChange(e.target.value)}
+                        onBlur={() => checkAndAutoFetchInvoice(formInvoiceNumber)}
+                        required
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => checkAndAutoFetchInvoice(formInvoiceNumber)}
+                        title="Check if bill exists and auto-fetch details"
+                        style={{
+                          padding: '0 10px',
+                          background: 'rgba(37, 99, 235, 0.1)',
+                          border: '1px solid rgba(37, 99, 235, 0.25)',
+                          color: 'var(--primary)',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {invoiceLookupLoading ? '...' : 'Auto-Fetch'}
+                      </button>
+                    </div>
+                    {lookupMessage && (
+                      <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', marginTop: '4px' }}>
+                        {lookupMessage}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -947,49 +1378,136 @@ const CreditLedgerContent: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Amount Inputs in 3 columns: Bill Amount, Received Amount, Return Amount */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label className="form-label">Bill Amount (₹) *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formBillAmount}
-                      onChange={(e) => setFormBillAmount(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="form-label">Received (₹)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formReceivedAmount}
-                      onChange={(e) => setFormReceivedAmount(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="form-label">Return (₹)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formReturnAmount}
-                      onChange={(e) => setFormReturnAmount(e.target.value)}
-                    />
-                  </div>
+                {/* Amount Inputs: Bill Amount */}
+                <div>
+                  <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Bill Amount (₹) *</span>
+                    {detectedExistingEntry && (
+                      <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '600' }}>
+                        Original Bill: {formatCurrency(detectedExistingEntry.billAmount)}
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={formBillAmount}
+                    onChange={(e) => setFormBillAmount(e.target.value)}
+                    required
+                  />
                 </div>
+
+                {/* Payment Collection Section (If existing bill is detected or collect mode) */}
+                {detectedExistingEntry ? (
+                  <div style={{
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))',
+                    border: '1.5px solid rgba(16, 185, 129, 0.3)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: '#10b981', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <IndianRupee size={16} /> Enter Payment Received from Customer:
+                      </span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        Already Paid: <strong style={{ color: '#10b981' }}>{formatCurrency(formReceivedAmount)}</strong>
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label className="form-label" style={{ color: '#10b981', fontWeight: '700', fontSize: '12px' }}>
+                          RECEIVED / PAID NOW (₹) *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="e.g. 500.00"
+                          value={addPaymentAmount}
+                          onChange={(e) => setAddPaymentAmount(e.target.value)}
+                          autoFocus={modalMode === 'collect' || !!detectedExistingEntry}
+                          style={{
+                            borderColor: '#10b981',
+                            background: 'rgba(16, 185, 129, 0.08)',
+                            fontSize: '16px',
+                            fontWeight: '800',
+                            color: '#10b981',
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="form-label" style={{ fontSize: '12px' }}>
+                          RETURN GOODS (₹)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          value={addReturnAmount}
+                          onChange={(e) => setAddReturnAmount(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Live Calculation Preview */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      background: 'rgba(0, 0, 0, 0.15)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                    }}>
+                      <span>Original Outstanding Due: <strong style={{ color: '#ef4444' }}>{formatCurrency(detectedExistingEntry.balanceAmount)}</strong></span>
+                      {Number(addPaymentAmount) > 0 && (
+                        <span style={{ color: '#10b981', fontWeight: '800' }}>
+                          - {formatCurrency(addPaymentAmount)}
+                        </span>
+                      )}
+                      <span>New Total Received: <strong style={{ color: '#10b981' }}>{formatCurrency(effectiveReceivedAmount)}</strong></span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Standard Fresh Invoice Amount Inputs */
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label className="form-label" style={{ fontWeight: '600' }}>RECEIVED / PAID NOW (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={formReceivedAmount}
+                        onChange={(e) => setFormReceivedAmount(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontWeight: '600' }}>RETURN GOODS (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={formReturnAmount}
+                        onChange={(e) => setFormReturnAmount(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Auto Calculated Live Preview Card */}
                 <div style={{
-                  padding: '14px 16px',
+                  padding: '14px 18px',
                   borderRadius: '12px',
                   background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid var(--border)',
@@ -998,16 +1516,25 @@ const CreditLedgerContent: React.FC = () => {
                   alignItems: 'center'
                 }}>
                   <div>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>
-                      Calculated Balance Due
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <TrendingDown size={12} /> Calculated Balance Due
                     </span>
-                    <div style={{ fontSize: '20px', fontWeight: '800', color: calculatedBalance > 0 ? '#ef4444' : '#10b981', marginTop: '2px' }}>
+                    <div style={{ fontSize: '26px', fontWeight: '900', color: calculatedBalance > 0 ? '#ef4444' : '#10b981', marginTop: '2px' }}>
                       {formatCurrency(calculatedBalance)}
                     </div>
+                    {detectedExistingEntry && Number(addPaymentAmount) > 0 ? (
+                      <span style={{ fontSize: '12px', color: '#10b981', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                        <Sparkles size={13} /> Due reduced by {formatCurrency(addPaymentAmount)}! (Was {formatCurrency(detectedExistingEntry.balanceAmount)})
+                      </span>
+                    ) : !detectedExistingEntry && Number(formReceivedAmount) > 0 ? (
+                      <span style={{ fontSize: '12px', color: '#10b981', fontWeight: '700', marginTop: '4px', display: 'block' }}>
+                        Due reduced by {formatCurrency(formReceivedAmount)}!
+                      </span>
+                    ) : null}
                   </div>
 
-                  <div>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
                       Payment Status
                     </span>
                     {getStatusBadge(calculatedStatus)}
@@ -1018,8 +1545,8 @@ const CreditLedgerContent: React.FC = () => {
                 <div>
                   <label className="form-label">Narration / Material Details / Remarks</label>
                   <textarea
-                    rows={3}
-                    placeholder="e.g. 2.5sqmm copper cable 2 bundles, 16A modular switch 10 pcs, PVC conduit pipes..."
+                    rows={2}
+                    placeholder="e.g. 2.5sqmm copper cable 2 bundles, 16A modular switch 10 pcs, payment via cash..."
                     value={formNarration}
                     onChange={(e) => setFormNarration(e.target.value)}
                     style={{
@@ -1051,9 +1578,30 @@ const CreditLedgerContent: React.FC = () => {
                   type="submit"
                   className="btn btn-primary"
                   disabled={actionLoading}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: (detectedExistingEntry && Number(addPaymentAmount) > 0)
+                      ? 'linear-gradient(135deg, #10b981, #059669)'
+                      : undefined,
+                    borderColor: (detectedExistingEntry && Number(addPaymentAmount) > 0)
+                      ? '#10b981'
+                      : undefined,
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    padding: '10px 20px',
+                  }}
                 >
-                  {actionLoading ? 'Saving...' : editingEntry ? 'Update Entry' : 'Save Credit Entry'}
+                  {actionLoading
+                    ? 'Saving...'
+                    : detectedExistingEntry
+                    ? Number(addPaymentAmount) > 0
+                      ? `Collect ${formatCurrency(addPaymentAmount)} & Reduce Due to ${formatCurrency(calculatedBalance)}`
+                      : 'Update Bill Entry'
+                    : editingEntry
+                    ? 'Update Entry'
+                    : `Save Credit Entry (${formatCurrency(calculatedBalance)} Due)`}
                 </button>
               </div>
             </form>
